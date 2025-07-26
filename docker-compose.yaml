@@ -1,0 +1,14 @@
+version: '1.0'
+services:
+  temperature-monitor:
+    image: python:3.9-alpine
+    build: .
+    container_name: temperature-monitor
+    ports:
+      - "8000:8000"
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"  # Required for RTL-SDR USB access
+    volumes:
+      - /mnt/ssd/weather-station:/app  # Persistent storage for CSV files
+    restart: unless-stopped
+    privileged: true  # May be needed for USB device access

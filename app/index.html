@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #3498db, #2ecc71);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 1.5s ease;
+            background-attachment: fixed;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            color: white;
+            font-size: 2.8rem;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .weather-phrase {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: white;
+            margin: 15px 0;
+            padding: 12px 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 50px;
+            display: inline-block;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.5s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 35px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease, background 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+        
+        .card-icon {
+            width: 90px;
+            height: 90px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 40px;
+            color: white;
+        }
+        
+        .temperature-card .card-icon {
+            background: linear-gradient(45deg, #ff7e5f, #feb47b);
+        }
+        
+        .humidity-card .card-icon {
+            background: linear-gradient(45deg, #1a2a6c, #2193b0);
+        }
+        
+        .card-title {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .value-container {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+        
+        .value {
+            font-size: 4rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+        }
+        
+        .unit {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 8px;
+            padding-bottom: 8px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 50px;
+            padding: 5px;
+            margin-top: 10px;
+        }
+        
+        .toggle-btn {
+            padding: 10px 20px;
+            border-radius: 50px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .source-info {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .source-info strong {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .temp-indicator {
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(
+                to right,
+                #1a2a6c 0%,
+                #3498db 25%,
+                #2ecc71 50%,
+                #f1c40f 65%,
+                #e67e22 80%,
+                #e74c3c 90%,
+                #c0392b 100%
+            );
+            border-radius: 5px;
+            margin-top: 15px;
+            position: relative;
+        }
+        
+        .temp-marker {
+            position: absolute;
+            top: -5px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sensor-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .sensor-status {
+            display: flex;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        
+        .sensor-status:hover {
+            background: rgba(0, 0, 0, 0.25);
+        }
+        
+        .sensor-status i {
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .online {
+            color: #2ecc71;
+        }
+        
+        .offline {
+            color: #e74c3c;
+        }
+        
+        .sensor-status .tooltip {
+            visibility: hidden;
+            width: 220px;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-family: monospace;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sensor-status .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+        }
+        
+        .sensor-status:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            color: white;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 650px) {
+            .dashboard {
+                padding: 25px 20px;
+                gap: 20px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .weather-phrase {
+                font-size: 1.3rem;
+                padding: 10px 20px;
+            }
+            
+            .card {
+                padding: 25px 20px;
+            }
+            
+            .value {
+                font-size: 3.2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .weather-phrase {
+                font-size: 1.1rem;
+                padding: 8px 15px;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .card-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 30px;
+            }
+            
+            .value {
+                font-size: 2.8rem;
+            }
+            
+            .unit {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather Status Dashboard</h1>
+            <div class="weather-phrase" id="weather-phrase">Loading weather data...</div>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card temperature-card">
+                <div class="card-icon">
+                    <i class="fas fa-thermometer-half"></i>
+                </div>
+                <h2 class="card-title">Temperature</h2>
+                <div class="value-container">
+                    <div class="value" id="temperature-value">--</div>
+                    <div class="unit" id="temperature-unit">°C</div>
+                </div>
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="celsius-btn">°C</button>
+                    <button class="toggle-btn" id="fahrenheit-btn">°F</button>
+                </div>
+                
+                <div class="temp-indicator">
+                    <div class="temp-marker" id="temp-marker" style="left: 50%"></div>
+                </div>
+                
+                <div class="sensor-info">
+                    <div class="sensor-status" id="sensor-0-status">
+                        <i class="fas fa-circle"></i> Back Porch: --
+                        <span class="tooltip">No data available</span>
+                    </div>
+                    <div class="sensor-status" id="sensor-1-status">
+                        <i class="fas fa-circle"></i> Front Porch: --
+                        <span class="tooltip">No data available</span>
+                    </div>
+                    <div class="sensor-status" id="sensor-2-status">
+                        <i class="fas fa-circle"></i> Side House: --
+                        <span class="tooltip">No data available</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card humidity-card">
+                <div class="card-icon">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <h2 class="card-title">Humidity</h2>
+                <div class="value-container">
+                    <div class="value" id="humidity-value">--</div>
+                    <div class="unit">%</div>
+                </div>
+                
+                <div class="temp-indicator">
+                    <div class="temp-marker" style="left: 50%"></div>
+                </div>
+                
+                <div class="sensor-info">
+                    <div class="sensor-status" id="humidity-0-status">
+                        <i class="fas fa-circle"></i> Back Porch: --
+                        <span class="tooltip">No data available</span>
+                    </div>
+                    <div class="sensor-status" id="humidity-1-status">
+                        <i class="fas fa-circle"></i> Front Porch: --
+                        <span class="tooltip">No data available</span>
+                    </div>
+                    <div class="sensor-status" id="humidity-2-status">
+                        <i class="fas fa-circle"></i> Side House: --
+                        <span class="tooltip">No data available</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="source-info">
+            <div class="loading" id="loading-indicator">
+                <div class="spinner"></div>
+                <span>Loading data from <strong>temperature_data.csv</strong>...</span>
+            </div>
+            <div>Last updated: <span id="update-time">--</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const SENSOR_MODEL = "Oregon-THGR810";
+        const SENSOR_NAMES = {
+            0: "Back Porch",
+            1: "Front Porch",
+            2: "Side House"
+        };
+        const VALID_CHANNELS = [0, 1, 2];
+        const AVERAGE_MINUTES = 5;
+        const UPDATE_INTERVAL = 10000; // 10 seconds
+        
+        // State
+        let currentTempC = null;
+        let avgHumidity = null;
+        let latestTimestamp = null;
+        let sensorData = {
+            0: { tempHistory: [], humidityHistory: [], lastSeen: null },
+            1: { tempHistory: [], humidityHistory: [], lastSeen: null },
+            2: { tempHistory: [], humidityHistory: [], lastSeen: null }
+        };
+        
+        // DOM Elements
+        const tempValue = document.getElementById('temperature-value');
+        const tempUnit = document.getElementById('temperature-unit');
+        const humidityValue = document.getElementById('humidity-value');
+        const updateTime = document.getElementById('update-time');
+        const weatherPhrase = document.getElementById('weather-phrase');
+        const celsiusBtn = document.getElementById('celsius-btn');
+        const fahrenheitBtn = document.getElementById('fahrenheit-btn');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        // Luxon timestamp parser
+        function parseLocalTimestamp(timestampStr) {
+            // First try SQL format (2025-07-24 22:10:23)
+            let dt = luxon.DateTime.fromSQL(timestampStr, { zone: 'local' });
+            
+            // Fallback to ISO if needed
+            if (!dt.isValid) dt = luxon.DateTime.fromISO(timestampStr, { zone: 'local' });
+            
+            // Final fallback to current time
+            return dt.isValid ? dt.toJSDate() : new Date();
+        }
+        
+        // Convert temperature based on current unit preference
+        function convertTemp(tempC) {
+            if (celsiusBtn.classList.contains('active')) {
+                return tempC.toFixed(1);
+            } else {
+                return Math.round((tempC * 9/5) + 32);
+            }
+        }
+        
+        // Get weather phrase based on temperature and humidity
+        function getWeatherPhrase(tempC, humidity) {
+            if (tempC === null || humidity === null) 
+                return "The air hums a quiet tune, waiting for its story to unfold...";
+            
+            // Time-of-day imagery
+            const hours = new Date().getHours();
+            const timeOfDay = 
+                hours < 5 ? "Night's velvet fingers still cling" :
+                hours < 8 ? "Dawn stretches her pale limbs" :
+                hours < 12 ? "Morning gilds the world" :
+                hours < 17 ? "Noon pours liquid gold" :
+                hours < 21 ? "Evening knits twilight" : "Midnight breathes stars";
+            
+            // Temperature poetry
+            let temperatureSong;
+            if (tempC <= 0) {
+                temperatureSong = "a silver-bright frost etches poems on every surface";
+            } else if (tempC <= 5) {
+                temperatureSong = "winter whispers through naked branches";
+            } else if (tempC <= 10) {
+                temperatureSong = "the cool air carries forgotten autumn leaves";
+            } else if (tempC <= 15) {
+                temperatureSong = "spring's first blush trembles in the breeze";
+            } else if (tempC <= 20) {
+                temperatureSong = "the day wears sunlight like a linen shirt";
+            } else if (tempC <= 25) {
+                temperatureSong = "summer unfolds her honeyed wings";
+            } else if (tempC <= 28) {
+                temperatureSong = "the heat dances like candle flames";
+            } else if (tempC <= 30) {
+                temperatureSong = "the air shimmers like desert dreams";
+            } else {
+                temperatureSong = "the scorching sun forges the world anew";
+            }
+            
+            // Humidity whispers
+            let humidityWhisper;
+            if (humidity < 30) {
+                humidityWhisper = "while the parched earth sighs for rain";
+            } else if (humidity < 50) {
+                humidityWhisper = "as crisp as freshly pressed pages";
+            } else if (humidity < 70) {
+                humidityWhisper = "with air like chilled springwater";
+            } else if (humidity < 85) {
+                humidityWhisper = "swaddled in moist velvet shadows";
+            } else {
+                humidityWhisper = "drenched in liquid stillness";
+            }
+            
+            // Story weaver
+            if (tempC < 10 && humidity > 70) {
+                return `${timeOfDay}, ${temperatureSong}, ${humidityWhisper}. A damp chill writes its melancholy verse on every windowpane.`;
+            } 
+            else if (tempC > 25 && humidity > 70) {
+                return `${timeOfDay} as ${temperatureSong}, ${humidityWhisper}. The world becomes a steam-kissed greenhouse, lush and languid.`;
+            }
+            else if (tempC > 25 && humidity < 30) {
+                return `${timeOfDay} while ${temperatureSong}, ${humidityWhisper}. Heat rises in visible waves like desert incantations.`;
+            }
+            else if (tempC >= 15 && tempC <= 25 && humidity >= 40 && humidity <= 60) {
+                return `${timeOfDay}—${temperatureSong}, ${humidityWhisper}. This is weather woven by the gentle hands of spring.`;
+            }
+            else {
+                return `${timeOfDay}. ${temperatureSong}, ${humidityWhisper}. The day unfolds its secret weather sonnet.`;
+            }
+        }
+        
+        // Set background based on temperature
+        function setTemperatureBackground(tempC) {
+            if (tempC === null) {
+                document.body.style.background = "linear-gradient(135deg, #1a2a6c, #3498db, #2ecc71)";
+                return;
+            }
+            
+            let color1, color2, color3;
+            
+            if (tempC <= 0) {
+                color1 = '#0a192f';
+                color2 = '#1a2a6c';
+                color3 = '#2c3e90';
+            } else if (tempC <= 5) {
+                color1 = '#1a2a6c';
+                color2 = '#2c3e90';
+                color3 = '#3498db';
+            } else if (tempC <= 10) {
+                color1 = '#1a2a6c';
+                color2 = '#2980b9';
+                color3 = '#3498db';
+            } else if (tempC <= 15) {
+                color1 = '#3498db';
+                color2 = '#2980b9';
+                color3 = '#27ae60';
+            } else if (tempC <= 20) {
+                color1 = '#3498db';
+                color2 = '#27ae60';
+                color3 = '#2ecc71';
+            } else if (tempC <= 25) {
+                color1 = '#27ae60';
+                color2 = '#2ecc71';
+                color3 = '#f1c40f';
+            } else if (tempC <= 28) {
+                color1 = '#2ecc71';
+                color2 = '#f1c40f';
+                color3 = '#f39c12';
+            } else if (tempC <= 30) {
+                color1 = '#f1c40f';
+                color2 = '#f39c12';
+                color3 = '#e67e22';
+            } else if (tempC <= 33) {
+                color1 = '#f39c12';
+                color2 = '#e67e22';
+                color3 = '#e74c3c';
+            } else {
+                color1 = '#e67e22';
+                color2 = '#e74c3c';
+                color3 = '#c0392b';
+            }
+            
+            document.body.style.background = `linear-gradient(135deg, ${color1}, ${color2}, ${color3})`;
+            
+            // Update temperature marker position (0-40°C range)
+            const position = Math.min(100, Math.max(0, (tempC / 40) * 100));
+            document.getElementById('temp-marker').style.left = `${position}%`;
+            
+            // Update weather phrase
+            weatherPhrase.textContent = getWeatherPhrase(tempC, avgHumidity);
+        }
+        
+        // Helper functions for safe parsing
+function safeParseFloat(value) {
+    if (value === "" || isNaN(parseFloat(value))) return null;
+    return parseFloat(value);
+}
+
+function safeParseInt(value) {
+    if (value === "" || isNaN(parseInt(value))) return null;
+    return parseInt(value);
+}
+
+// Process CSV data focusing on first 13 columns
+function processCSVData(csvText) {
+    console.log("Processing CSV data");
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) {
+        console.error("CSV file is empty or has no headers");
+        return;
+    }
+
+    // Define the columns we care about (first 13)
+    const RELEVANT_COLUMNS = [
+        'time', 'msg', 'codes', 'model', 'button', 'id', 
+        'channel', 'battery_ok', 'temperature_C', 'mic', 
+        'subtype', 'humidity', 'state'
+    ];
+    
+    const allReadings = [];
+    let newestTimestamp = null;
+
+    for (let i = 1; i < lines.length; i++) {
+        const rawValues = lines[i].split(',');
+        const row = {};
+        
+        // Process only the first 13 columns
+        for (let col = 0; col < RELEVANT_COLUMNS.length; col++) {
+            const header = RELEVANT_COLUMNS[col];
+            // Use empty string if column doesn't exist in this row
+            row[header] = rawValues[col] ? rawValues[col].trim() : "";
+        }
+
+        // Skip if model doesn't match or channel is invalid
+        if (row.model !== SENSOR_MODEL) continue;
+        
+        const channel = safeParseInt(row.channel);
+        if (channel === null || !VALID_CHANNELS.includes(channel)) continue;
+        
+        // Parse timestamp using Luxon
+        const timestamp = row.time ? parseLocalTimestamp(row.time) : new Date();
+        
+        // Track newest timestamp
+        if (!newestTimestamp || timestamp > newestTimestamp) {
+            newestTimestamp = timestamp;
+        }
+        
+        // Process temperature if available
+        if (row.temperature_C) {
+            const tempValue = safeParseFloat(row.temperature_C);
+            if (tempValue !== null) {
+                allReadings.push({
+                    channel: channel,
+                    type: 'temperature',
+                    value: tempValue,
+                    time: timestamp
+                });
+            }
+        }
+        
+        // Process humidity if available
+        if (row.humidity) {
+            const humidityValue = safeParseFloat(row.humidity);
+            if (humidityValue !== null) {
+                allReadings.push({
+                    channel: channel,
+                    type: 'humidity',
+                    value: humidityValue,
+                    time: timestamp
+                });
+            }
+        }
+    }
+            
+            // Sort readings by timestamp (newest first)
+            allReadings.sort((a, b) => b.time - a.time);
+            
+            // Calculate cutoff (5 minutes before newest reading)
+            const cutoff = newestTimestamp ? new Date(newestTimestamp.getTime() - AVERAGE_MINUTES * 60000) : new Date();
+            
+            // Reset sensor data
+            for (const channel of VALID_CHANNELS) {
+                sensorData[channel] = {
+                    tempHistory: [],
+                    humidityHistory: [],
+                    lastSeen: null
+                };
+            }
+            
+            // Process readings within time window
+            for (const reading of allReadings) {
+                if (reading.time < cutoff) {
+                    // Stop processing once we're outside the time window
+                    break;
+                }
+                
+                const channelData = sensorData[reading.channel];
+                if (reading.type === 'temperature') {
+                    channelData.tempHistory.push({
+                        value: reading.value,
+                        time: reading.time
+                    });
+                    channelData.lastSeen = reading.time;
+                } else {
+                    channelData.humidityHistory.push({
+                        value: reading.value,
+                        time: reading.time
+                    });
+                    channelData.lastSeen = reading.time;
+                }
+            }
+            
+            // Calculate averages
+            const tempAverages = [];
+            const humidityAverages = [];
+            
+            for (const channel of VALID_CHANNELS) {
+                const channelData = sensorData[channel];
+                
+                // Temperature average
+                if (channelData.tempHistory.length > 0) {
+                    const sum = channelData.tempHistory.reduce((acc, item) => acc + item.value, 0);
+                    const avg = sum / channelData.tempHistory.length;
+                    tempAverages.push(avg);
+                }
+                
+                // Humidity average
+                if (channelData.humidityHistory.length > 0) {
+                    const sum = channelData.humidityHistory.reduce((acc, item) => acc + item.value, 0);
+                    const avg = sum / channelData.humidityHistory.length;
+                    humidityAverages.push(avg);
+                }
+            }
+            
+            // Update display
+            if (tempAverages.length > 0) {
+                currentTempC = tempAverages.reduce((a, b) => a + b, 0) / tempAverages.length;
+                tempValue.textContent = convertTemp(currentTempC);
+            } else {
+                tempValue.textContent = "--";
+                currentTempC = null;
+            }
+            
+            if (humidityAverages.length > 0) {
+                avgHumidity = humidityAverages.reduce((a, b) => a + b, 0) / humidityAverages.length;
+                humidityValue.textContent = avgHumidity.toFixed(1);
+            } else {
+                humidityValue.textContent = "--";
+                avgHumidity = null;
+            }
+            
+            // Update timestamp display
+            updateTime.textContent = newestTimestamp ? newestTimestamp.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }) : "--";
+            
+            setTemperatureBackground(currentTempC);
+            updateSensorStatus();
+            
+            // Hide loading indicator
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Update sensor status displays
+        function updateSensorStatus() {
+            const now = new Date();
+            const cutoff = new Date(now.getTime() - (AVERAGE_MINUTES * 60000 + 30000)); // 5.5 minutes
+            
+            for (const channel of VALID_CHANNELS) {
+                const sensor = sensorData[channel];
+                const isOnline = sensor.lastSeen && new Date(sensor.lastSeen) >= cutoff;
+                
+                // Update temperature status
+                const tempStatus = document.getElementById(`sensor-${channel}-status`);
+                if (tempStatus) {
+                    const lastTemp = sensor.tempHistory.length > 0 
+                        ? sensor.tempHistory[sensor.tempHistory.length - 1].value 
+                        : null;
+                    
+                    // Fixed the ternary operator here
+                    const tempDisplay = lastTemp !== null 
+                        ? `${convertTemp(lastTemp)}${celsiusBtn.classList.contains('active') ? '°C' : '°F'}`
+                        : '--';
+                    
+                    const tooltipContent = sensor.tempHistory.slice(-10).reverse().map(reading => {
+                        const time = new Date(reading.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        return `${time}: ${convertTemp(reading.value)}${celsiusBtn.classList.contains('active') ? '°C' : '°F'}`;
+                    }).join('<br>') || 'No recent data';
+                    
+                    tempStatus.innerHTML = `
+                        <i class="fas fa-circle ${isOnline ? 'online' : 'offline'}"></i> 
+                        ${SENSOR_NAMES[channel]}: ${tempDisplay}
+                        <span class="tooltip">${tooltipContent}</span>
+                    `;
+                }
+                
+                // Update humidity status
+                const humidityStatus = document.getElementById(`humidity-${channel}-status`);
+                if (humidityStatus) {
+                    const lastHumidity = sensor.humidityHistory.length > 0 
+                        ? sensor.humidityHistory[sensor.humidityHistory.length - 1].value 
+                        : null;
+                    
+                    // Fixed display logic here
+                    const humidityDisplay = lastHumidity !== null 
+                        ? `${lastHumidity.toFixed(1)}%`
+                        : '--';
+                    
+                    const tooltipContent = sensor.humidityHistory.slice(-10).reverse().map(reading => {
+                        const time = new Date(reading.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        return `${time}: ${reading.value.toFixed(1)}%`;
+                    }).join('<br>') || 'No recent data';
+                    
+                    humidityStatus.innerHTML = `
+                        <i class="fas fa-circle ${isOnline ? 'online' : 'offline'}"></i> 
+                        ${SENSOR_NAMES[channel]}: ${humidityDisplay}
+                        <span class="tooltip">${tooltipContent}</span>
+                    `;
+                }
+            }
+        }
+        
+        // Temperature unit toggle
+        function updateTemperatureDisplay() {
+            if (currentTempC !== null) {
+                tempValue.textContent = convertTemp(currentTempC);
+            }
+            updateSensorStatus();
+        }
+        
+        // Event listeners
+        celsiusBtn.addEventListener('click', () => {
+            if (!celsiusBtn.classList.contains('active')) {
+                celsiusBtn.classList.add('active');
+                fahrenheitBtn.classList.remove('active');
+                tempUnit.textContent = '°C';
+                updateTemperatureDisplay();
+            }
+        });
+        
+        fahrenheitBtn.addEventListener('click', () => {
+            if (!fahrenheitBtn.classList.contains('active')) {
+                fahrenheitBtn.classList.add('active');
+                celsiusBtn.classList.remove('active');
+                tempUnit.textContent = '°F';
+                updateTemperatureDisplay();
+            }
+        });
+        
+        // Fetch CSV data
+        function fetchCSVData() {
+            loadingIndicator.style.display = 'flex';
+            
+            fetch('temperature_data_live.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    processCSVData(csvText);
+                })
+                .catch(error => {
+                    console.error("Error loading CSV:", error);
+                    loadingIndicator.innerHTML = `<span>Error loading data: ${error.message}</span>`;
+                    updateTime.textContent = "Error";
+                });
+        }
+        
+        // Initialize
+        fetchCSVData();
+        setInterval(fetchCSVData, UPDATE_INTERVAL);
+    </script>
+</body>
+</html>
