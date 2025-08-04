@@ -1,14 +1,18 @@
-version: '1.0'
 services:
   temperature-monitor:
-    image: python:3.9-alpine
-    build: .
+    command: /weather-station/startup.sh
     container_name: temperature-monitor
-    ports:
-      - "8000:8000"
     devices:
-      - "/dev/bus/usb:/dev/bus/usb"  # Required for RTL-SDR USB access
+      - /dev/bus/usb/001/007:/dev/bus/usb/001/007
+    environment:
+      - PUID=568
+      - PGID=568
+      - USB_DEVICE_PATH=/dev/bus/usb/001/007
+      - TZ=America/Los_Angeles
+    image: python:3.9-alpine
+    ports:
+      - '8001:8000'
+    privileged: True
     volumes:
-      - /mnt/ssd/weather-station:/app  # Persistent storage for CSV files
-    restart: unless-stopped
-    privileged: true  # May be needed for USB device access
+      - /mnt/ssd/apps/weather-station:/weather-station
+      - /etc/localtime:/etc/localtime:ro
