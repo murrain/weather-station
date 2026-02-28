@@ -13,10 +13,9 @@ import time
 import urllib.error
 import urllib.request
 
-NWS_URL = "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
-OUTPUT_FILE = "/weather-station/app/nws_forecast.json"
-TMP_FILE = OUTPUT_FILE + ".tmp"
-INTERVAL_SECONDS = 20 * 60  # 20 minutes
+from config import NWS_URL, NWS_JSON, NWS_INTERVAL
+
+TMP_FILE = NWS_JSON + ".tmp"
 
 HEADERS = {
     "User-Agent": "personal-weather-station/1.0 (home dashboard; contact: local)",
@@ -79,7 +78,7 @@ def fetch_and_write():
     try:
         with open(TMP_FILE, "w") as f:
             json.dump(payload, f)
-        os.replace(TMP_FILE, OUTPUT_FILE)
+        os.replace(TMP_FILE, NWS_JSON)
         print(
             f"[nws] Updated: {payload['current']['shortForecast']}"
             f" | wind {wind_speed_mph:.0f} mph {payload['current']['windDirection']}"
@@ -93,5 +92,5 @@ if __name__ == "__main__":
     print("[nws] Starting NWS forecast poller")
     fetch_and_write()
     while True:
-        time.sleep(INTERVAL_SECONDS)
+        time.sleep(NWS_INTERVAL)
         fetch_and_write()

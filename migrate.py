@@ -13,12 +13,10 @@ import csv
 import sqlite3
 import sys
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
-SENSOR_MODEL   = "Oregon-THGR810"
-VALID_CHANNELS = {0, 1, 2}
-PACIFIC        = ZoneInfo("America/Los_Angeles")
-BATCH_SIZE     = 5000
+from config import SENSOR_MODEL, VALID_CHANNELS, PACIFIC
+
+BATCH_SIZE = 5000
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (

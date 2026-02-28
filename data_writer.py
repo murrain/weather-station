@@ -14,24 +14,14 @@ import sqlite3
 import sys
 import time
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
-SENSOR_MODEL      = "Oregon-THGR810"
-VALID_CHANNELS    = {0, 1, 2}
-CHANNEL_NAMES     = {0: "Back Porch", 1: "Front Porch", 2: "Side House"}
-PACIFIC           = ZoneInfo("America/Los_Angeles")
+from config import (
+    SENSOR_MODEL, VALID_CHANNELS, CHANNEL_NAMES, PACIFIC,
+    CSV_PATH, DB_PATH, CURRENT_JSON, STATE_PATH,
+    POLL_INTERVAL, GENERATE_INTERVAL, WINDOW_SECONDS, STALE_SECONDS, RECENT_COUNT,
+)
 
-CSV_PATH          = os.environ.get("WEATHER_CSV",     "/weather-station/app/temperature_data.csv")
-DB_PATH           = os.environ.get("WEATHER_DB",      "/weather-station/app/weather.db")
-OUTPUT_JSON       = os.environ.get("WEATHER_CURRENT", "/weather-station/app/current.json")
-STATE_PATH        = os.environ.get("WEATHER_STATE",   "/weather-station/app/csv_watcher_state.json")
-TMP_JSON          = OUTPUT_JSON + ".tmp"
-
-POLL_INTERVAL     = 10       # seconds between CSV checks
-GENERATE_INTERVAL = 20       # seconds between current.json writes
-WINDOW_SECONDS    = 5 * 60  # 5-minute averaging window
-STALE_SECONDS     = WINDOW_SECONDS + 30
-RECENT_COUNT      = 5        # readings shown in tooltip
+TMP_JSON = CURRENT_JSON + ".tmp"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
@@ -246,7 +236,7 @@ def generate_current(con):
 
     with open(TMP_JSON, "w") as f:
         json.dump(payload, f)
-    os.replace(TMP_JSON, OUTPUT_JSON)
+    os.replace(TMP_JSON, CURRENT_JSON)
 
 
 # ── Main loop ─────────────────────────────────────────────────────
