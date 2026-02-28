@@ -250,6 +250,10 @@
                 color: #2ecc71;
             }
 
+            .warning {
+                color: #f1c40f;
+            }
+
             .offline {
                 color: #e74c3c;
             }
@@ -513,9 +517,24 @@
             let avgHumidity = null;
             let latestTimestamp = null;
             let sensorData = {
-                0: { tempHistory: [], humidityHistory: [], lastSeen: null },
-                1: { tempHistory: [], humidityHistory: [], lastSeen: null },
-                2: { tempHistory: [], humidityHistory: [], lastSeen: null },
+                0: {
+                    tempHistory: [],
+                    humidityHistory: [],
+                    lastSeen: null,
+                    batteryOk: null,
+                },
+                1: {
+                    tempHistory: [],
+                    humidityHistory: [],
+                    lastSeen: null,
+                    batteryOk: null,
+                },
+                2: {
+                    tempHistory: [],
+                    humidityHistory: [],
+                    lastSeen: null,
+                    batteryOk: null,
+                },
             };
             let narrativeState = {
                 text: null,
@@ -935,6 +954,7 @@
                 const tempCol = headerIndex.temperature_C;
                 const humidityCol = headerIndex.humidity;
                 const timeCol = headerIndex.time;
+                const batteryCol = headerIndex.battery_ok;
 
                 if (
                     modelCol === undefined ||
@@ -960,6 +980,11 @@
                     const timeRaw = rawValues[timeCol]
                         ? rawValues[timeCol].trim()
                         : "";
+                    const batteryRaw =
+                        batteryCol !== undefined && rawValues[batteryCol]
+                            ? rawValues[batteryCol].trim()
+                            : "";
+                    const batteryOk = safeParseInt(batteryRaw);
 
                     // Skip if model doesn't match or channel is invalid
                     if (model !== SENSOR_MODEL) continue;
@@ -989,6 +1014,7 @@
                                 type: "temperature",
                                 value: tempValue,
                                 time: timestamp,
+                                batteryOk: batteryOk,
                             });
                         }
                     }
@@ -1005,6 +1031,7 @@
                                 type: "humidity",
                                 value: humidityValue,
                                 time: timestamp,
+                                batteryOk: batteryOk,
                             });
                         }
                     }
@@ -1026,6 +1053,7 @@
                         tempHistory: [],
                         humidityHistory: [],
                         lastSeen: null,
+                        batteryOk: null,
                     };
                 }
 
@@ -1054,6 +1082,13 @@
                         reading.time > channelData.lastSeen
                     ) {
                         channelData.lastSeen = reading.time;
+                    }
+
+                    if (
+                        channelData.batteryOk === null &&
+                        reading.batteryOk !== null
+                    ) {
+                        channelData.batteryOk = reading.batteryOk;
                     }
                 }
 
@@ -1135,6 +1170,18 @@
                     const sensor = sensorData[channel];
                     const isOnline =
                         sensor.lastSeen && new Date(sensor.lastSeen) >= cutoff;
+                    const isBatteryLow = isOnline && sensor.batteryOk === 0;
+                    const statusClass = isOnline
+                        ? isBatteryLow
+                            ? "warning"
+                            : "online"
+                        : "offline";
+                    const batteryLabel =
+                        sensor.batteryOk === 1
+                            ? "Battery OK"
+                            : sensor.batteryOk === 0
+                              ? "Battery LOW"
+                              : "Battery unknown";
 
                     // Update temperature status
                     const tempStatus = document.getElementById(
@@ -1169,9 +1216,9 @@
                                 .join("<br>") || "No recent data";
 
                         tempStatus.innerHTML = `
-                        <i class="fas fa-circle ${isOnline ? "online" : "offline"}"></i>
+                        <i class="fas fa-circle ${statusClass}"></i>
                         ${SENSOR_NAMES[channel]}: ${tempDisplay}
-                        <span class="tooltip">${tooltipContent}</span>
+                        <span class="tooltip">${batteryLabel}<br>${tooltipContent}</span>
                     `;
                     }
 
@@ -1208,9 +1255,9 @@
                                 .join("<br>") || "No recent data";
 
                         humidityStatus.innerHTML = `
-                        <i class="fas fa-circle ${isOnline ? "online" : "offline"}"></i>
+                        <i class="fas fa-circle ${statusClass}"></i>
                         ${SENSOR_NAMES[channel]}: ${humidityDisplay}
-                        <span class="tooltip">${tooltipContent}</span>
+                        <span class="tooltip">${batteryLabel}<br>${tooltipContent}</span>
                     `;
                     }
                 }
