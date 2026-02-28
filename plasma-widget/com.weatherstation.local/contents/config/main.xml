@@ -8,8 +8,17 @@
         <entry name="apiEndpoint" type="String">
             <default>http://192.168.8.30:8002/data/3.0/onecall</default>
         </entry>
-        <entry name="units" type="String">
-            <default>metric</default>
+        <entry name="tempUnit" type="String">
+            <default>C</default>
+        </entry>
+        <entry name="windUnit" type="String">
+            <default>m/s</default>
+        </entry>
+        <entry name="pressureUnit" type="String">
+            <default>hPa</default>
+        </entry>
+        <entry name="visibilityUnit" type="String">
+            <default>km</default>
         </entry>
         <entry name="updateInterval" type="Int">
             <default>5</default>

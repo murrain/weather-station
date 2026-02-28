@@ -7,4 +7,9 @@ ConfigModel {
         icon: "configure"
         source: "config/ConfigGeneral.qml"
     }
+    ConfigCategory {
+        name: i18n("Units")
+        icon: "kruler"
+        source: "config/ConfigUnits.qml"
+    }
 }

@@ -38,8 +38,8 @@ PlasmoidItem {
     fullRepresentation:    FullRepresentation {}
 
     // On desktop/panel threshold
-    switchWidth:  Kirigami.Units.gridUnit * 14
-    switchHeight: Kirigami.Units.gridUnit * 14
+    switchWidth:  Kirigami.Units.gridUnit * 10
+    switchHeight: Kirigami.Units.gridUnit * 10
 
     Plasmoid.icon:  kdeIcon
     Plasmoid.title: "Weather Station"
@@ -62,7 +62,6 @@ PlasmoidItem {
     Connections {
         target: Plasmoid.configuration
         function onApiEndpointChanged()    { fetchWeather() }
-        function onUnitsChanged()          { fetchWeather() }
         function onUpdateIntervalChanged() {
             refreshTimer.interval = (Plasmoid.configuration.updateInterval || 5) * 60 * 1000
             refreshTimer.restart()
@@ -73,10 +72,9 @@ PlasmoidItem {
         loading  = true
         errorMsg = ""
 
-        var units    = Plasmoid.configuration.units       || "metric"
         var endpoint = Plasmoid.configuration.apiEndpoint || "http://192.168.8.30:8002/data/3.0/onecall"
         var sep      = endpoint.indexOf("?") >= 0 ? "&" : "?"
-        var url      = endpoint + sep + "units=" + units
+        var url      = endpoint + sep + "units=metric"
 
         var xhr = new XMLHttpRequest()
         xhr.open("GET", url)
@@ -123,40 +121,68 @@ PlasmoidItem {
         return map[icon] || "weather-none-available"
     }
 
-    // ── Formatting helpers ─────────────────────────────────────────
+    // ── Unit conversion (all data arrives in metric) ──────────────
+
+    // Temperature: API sends °C
+    function convertTemp(c) {
+        var u = Plasmoid.configuration.tempUnit || "C"
+        if (u === "F") return c * 9.0 / 5.0 + 32.0
+        if (u === "K") return c + 273.15
+        return c
+    }
+
+    function tempSuffix() {
+        var u = Plasmoid.configuration.tempUnit || "C"
+        if (u === "F") return "°F"
+        if (u === "K") return " K"
+        return "°C"
+    }
+
     function formatTemp(val) {
         if (val === undefined || val === null) return "--"
-        var u = Plasmoid.configuration.units || "metric"
-        return Math.round(val) + (u === "metric" ? "°C" : "°F")
+        return Math.round(convertTemp(val)) + tempSuffix()
     }
 
     function formatTempPrecise(val) {
         if (val === undefined || val === null) return "--"
-        var u = Plasmoid.configuration.units || "metric"
-        return val.toFixed(1) + (u === "metric" ? "°C" : "°F")
+        return convertTemp(val).toFixed(1) + tempSuffix()
     }
 
+    // Wind: API sends m/s
     function formatWind(speed) {
         if (speed === undefined || speed === null) return "--"
-        var u = Plasmoid.configuration.units || "metric"
-        return Math.round(speed) + (u === "metric" ? " m/s" : " mph")
+        var u = Plasmoid.configuration.windUnit || "m/s"
+        if (u === "km/h")  return Math.round(speed * 3.6) + " km/h"
+        if (u === "mph")   return Math.round(speed * 2.237) + " mph"
+        if (u === "knots") return Math.round(speed * 1.944) + " knots"
+        return Math.round(speed) + " m/s"
+    }
+
+    // Pressure: API sends hPa
+    function formatPressure(hpa) {
+        if (hpa === undefined || hpa === null) return "--"
+        var u = Plasmoid.configuration.pressureUnit || "hPa"
+        if (u === "inHg") return (hpa * 0.02953).toFixed(2) + " inHg"
+        if (u === "mmHg") return Math.round(hpa * 0.7501) + " mmHg"
+        return Math.round(hpa) + " hPa"
+    }
+
+    // Visibility: API sends meters
+    function formatVisibility(vis) {
+        if (vis === undefined || vis === null) return "--"
+        var u = Plasmoid.configuration.visibilityUnit || "km"
+        if (u === "mi") {
+            var miles = vis / 1609.34
+            return miles >= 10 ? Math.round(miles) + " mi" : miles.toFixed(1) + " mi"
+        }
+        var km = vis / 1000.0
+        return km >= 10 ? Math.round(km) + " km" : km.toFixed(1) + " km"
     }
 
     function formatDayShort(epoch) {
         var d    = new Date(epoch * 1000)
         var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
         return days[d.getDay()]
-    }
-
-    function formatVisibility(vis) {
-        if (vis === undefined || vis === null) return "--"
-        var u = Plasmoid.configuration.units || "metric"
-        if (u === "metric") {
-            var km = vis / 1000.0
-            return km >= 10 ? Math.round(km) + " km" : km.toFixed(1) + " km"
-        }
-        var miles = vis / 1609.34
-        return miles >= 10 ? Math.round(miles) + " mi" : miles.toFixed(1) + " mi"
     }
 
     function capitalize(s) {
