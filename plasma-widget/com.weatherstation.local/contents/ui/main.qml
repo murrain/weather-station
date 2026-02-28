@@ -32,8 +32,8 @@ PlasmoidItem {
     fullRepresentation:    FullRepresentation {}
 
     // On desktop/panel threshold
-    switchWidth:  Kirigami.Units.gridUnit * 22
-    switchHeight: Kirigami.Units.gridUnit * 14
+    switchWidth:  Kirigami.Units.gridUnit * 34
+    switchHeight: Kirigami.Units.gridUnit * 22
 
     Plasmoid.icon:  kdeIcon
     Plasmoid.title: "Weather Station"
@@ -64,7 +64,7 @@ PlasmoidItem {
         loading  = true
         errorMsg = ""
 
-        var units    = Plasmoid.configuration.units       || "imperial"
+        var units    = Plasmoid.configuration.units       || "metric"
         var endpoint = Plasmoid.configuration.apiEndpoint || "http://192.168.8.30:8002/data/3.0/onecall"
         var sep      = endpoint.indexOf("?") >= 0 ? "&" : "?"
         var url      = endpoint + sep + "units=" + units
@@ -117,20 +117,31 @@ PlasmoidItem {
     // ── Formatting helpers ─────────────────────────────────────────
     function formatTemp(val) {
         if (val === undefined || val === null) return "--"
-        var u = Plasmoid.configuration.units || "imperial"
-        return Math.round(val) + (u === "imperial" ? "°F" : "°C")
+        var u = Plasmoid.configuration.units || "metric"
+        return Math.round(val) + (u === "metric" ? "°C" : "°F")
     }
 
     function formatWind(speed) {
         if (speed === undefined || speed === null) return "--"
-        var u = Plasmoid.configuration.units || "imperial"
-        return Math.round(speed) + (u === "imperial" ? " mph" : " m/s")
+        var u = Plasmoid.configuration.units || "metric"
+        return Math.round(speed) + (u === "metric" ? " m/s" : " mph")
     }
 
     function formatDayShort(epoch) {
         var d    = new Date(epoch * 1000)
         var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
         return days[d.getDay()]
+    }
+
+    function formatVisibility(vis) {
+        if (vis === undefined || vis === null) return "--"
+        var u = Plasmoid.configuration.units || "metric"
+        if (u === "metric") {
+            var km = vis / 1000.0
+            return km >= 10 ? Math.round(km) + " km" : km.toFixed(1) + " km"
+        }
+        var miles = vis / 1609.34
+        return miles >= 10 ? Math.round(miles) + " mi" : miles.toFixed(1) + " mi"
     }
 
     function capitalize(s) {

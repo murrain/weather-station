@@ -8,7 +8,7 @@ Kirigami.FormLayout {
 
     // KDE config binding: cfg_<name> properties are auto-synced with main.xml entries
     property alias cfg_apiEndpoint:    endpointField.text
-    property string cfg_units:         "imperial"
+    property string cfg_units:         "metric"
     property alias cfg_updateInterval: intervalSpin.value
 
     TextField {

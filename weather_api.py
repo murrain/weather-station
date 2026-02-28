@@ -421,6 +421,12 @@ def build_daily_list(units="metric"):
         moonrise_ep, moonset_ep   = moon_rise_set(LOCATION_LAT, LOCATION_LON, cal_date)
         phase                     = moon_phase_fraction(cal_date)
 
+        day_short   = day_p.get("shortForecast", "")   if day_p   else short
+        night_short = night_p.get("shortForecast", "") if night_p else short
+
+        day_wind_ms   = parse_wind_mph(day_p.get("windSpeed", ""))   * 0.44704 if day_p   else wind_ms
+        night_wind_ms = parse_wind_mph(night_p.get("windSpeed", "")) * 0.44704 if night_p else wind_ms
+
         daily.append({
             "dt":         dt_ts,
             "sunrise":    sunrise_ep,
@@ -453,6 +459,18 @@ def build_daily_list(units="metric"):
             "clouds":     clouds_pct(short),
             "pop":        pop,
             "uvi":        0,
+            "day_detail": {
+                "weather":    [sky_to_owm(day_short, True)],
+                "pop":        day_pop / 100.0,
+                "wind_speed": apply_wind(day_wind_ms, units),
+                "summary":    day_short,
+            },
+            "night_detail": {
+                "weather":    [sky_to_owm(night_short, False)],
+                "pop":        night_pop / 100.0,
+                "wind_speed": apply_wind(night_wind_ms, units),
+                "summary":    night_short,
+            },
         })
 
     return daily

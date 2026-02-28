@@ -9,7 +9,7 @@
             <default>http://192.168.8.30:8002/data/3.0/onecall</default>
         </entry>
         <entry name="units" type="String">
-            <default>imperial</default>
+            <default>metric</default>
         </entry>
         <entry name="updateInterval" type="Int">
             <default>5</default>

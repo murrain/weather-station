@@ -4,14 +4,10 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
-Item {
+MouseArea {
     id: compact
 
-    // Tap anywhere to expand/collapse full representation
-    MouseArea {
-        anchors.fill: parent
-        onClicked: Plasmoid.expanded = !Plasmoid.expanded
-    }
+    onClicked: root.expanded = !root.expanded
 
     RowLayout {
         anchors.centerIn: parent
