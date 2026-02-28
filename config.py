@@ -23,7 +23,7 @@ STATE_PATH   = os.environ.get("WEATHER_STATE",   "/weather-station/csv_watcher_s
 POLL_INTERVAL     = 10       # seconds between CSV checks
 GENERATE_INTERVAL = 20       # seconds between current.json writes
 WINDOW_SECONDS    = 5 * 60  # 5-minute averaging window
-STALE_SECONDS     = WINDOW_SECONDS + 30
+STALE_SECONDS     = WINDOW_SECONDS + 30  # grace period beyond the averaging window
 RECENT_COUNT      = 5        # readings shown in tooltip
 
 # ── NWS ───────────────────────────────────────────────────────────

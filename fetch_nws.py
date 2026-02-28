@@ -46,18 +46,18 @@ def fetch_and_write():
             raw = resp.read()
         data = json.loads(raw)
     except urllib.error.HTTPError as exc:
-        print(f"[nws] HTTP {exc.code}: {exc.reason} — keeping existing file")
+        print(f"[nws] HTTP {exc.code}: {exc.reason} — keeping existing file", flush=True)
         return
     except urllib.error.URLError as exc:
-        print(f"[nws] Network error: {exc.reason} — keeping existing file")
+        print(f"[nws] Network error: {exc.reason} — keeping existing file", flush=True)
         return
     except Exception as exc:
-        print(f"[nws] Unexpected error: {exc} — keeping existing file")
+        print(f"[nws] Unexpected error: {exc} — keeping existing file", flush=True)
         return
 
     periods = data.get("properties", {}).get("periods", [])
     if not periods:
-        print("[nws] Response had no periods — keeping existing file")
+        print("[nws] Response had no periods — keeping existing file", flush=True)
         return
 
     current = periods[0]
@@ -69,7 +69,7 @@ def fetch_and_write():
         "current": {
             "windSpeedMph": wind_speed_mph,
             "windDirection": current.get("windDirection", ""),
-            "probabilityOfPrecipitation": precip.get("value") or 0,
+            "probabilityOfPrecipitation": precip.get("value") if precip.get("value") is not None else 0,
             "shortForecast": current.get("shortForecast", ""),
             "isDaytime": current.get("isDaytime", True),
         },
@@ -82,14 +82,15 @@ def fetch_and_write():
         print(
             f"[nws] Updated: {payload['current']['shortForecast']}"
             f" | wind {wind_speed_mph:.0f} mph {payload['current']['windDirection']}"
-            f" | precip {payload['current']['probabilityOfPrecipitation']}%"
+            f" | precip {payload['current']['probabilityOfPrecipitation']}%",
+            flush=True,
         )
     except OSError as exc:
-        print(f"[nws] Failed to write output file: {exc}")
+        print(f"[nws] Failed to write output file: {exc}", flush=True)
 
 
 if __name__ == "__main__":
-    print("[nws] Starting NWS forecast poller")
+    print("[nws] Starting NWS forecast poller", flush=True)
     fetch_and_write()
     while True:
         time.sleep(NWS_INTERVAL)

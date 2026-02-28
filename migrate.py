@@ -88,7 +88,8 @@ def migrate(csv_path, db_path):
                 print(f"  {total:>10,} rows scanned   {inserted:>8,} inserted", flush=True)
 
             # Filter to sensor model and valid channels
-            if row.get("model", "").strip() not in SENSOR_MODELS:
+            model = row.get("model", "").strip()
+            if model not in SENSOR_MODELS:
                 skipped += 1
                 continue
 
@@ -112,7 +113,6 @@ def migrate(csv_path, db_path):
                 skipped += 1
                 continue
 
-            model = row.get("model", "").strip()
             batch.append((model, sensor_id, channel, temp_c, humidity, battery_ok, received_at))
 
             if len(batch) >= BATCH_SIZE:

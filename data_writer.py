@@ -111,19 +111,34 @@ def import_new_rows(con, state):
     batch = []
 
     with open(CSV_PATH, newline="", encoding="utf-8") as f:
-        # Read header line separately so we can seek before building DictReader.
-        # Constructing DictReader first buffers data and makes seek unreliable.
+        # Read header line separately so we can seek and parse rows manually.
+        # Using readline() instead of DictReader lets us detect partial lines
+        # (no trailing \n) so we never advance the offset past an incomplete
+        # row that rtl_433 is still writing.
         f.seek(0)
         header_line = f.readline()
         header_end  = f.tell()
         fieldnames  = next(csv.reader([header_line]))
 
-        seek_to = max(state["offset"], header_end)
+        seek_to    = max(state["offset"], header_end)
+        new_offset = seek_to
         f.seek(seek_to)
 
-        reader = csv.DictReader(f, fieldnames=fieldnames)
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            if not line.endswith("\n"):
+                # Partial line — rtl_433 is mid-write. Stop here; don't
+                # advance offset past it so we re-read it next poll.
+                break
+            new_offset = f.tell()
 
-        for row in reader:
+            parsed = next(csv.reader([line]), None)
+            if not parsed:
+                continue
+            row = dict(zip(fieldnames, parsed))
+
             model = row.get("model", "").strip()
             if model not in SENSOR_MODELS:
                 continue
@@ -145,8 +160,6 @@ def import_new_rows(con, state):
                 continue
 
             batch.append((model, sensor_id, channel, temp_c, humidity, battery_ok, received_at))
-
-        new_offset = f.tell()
 
     if batch:
         con.executemany(INSERT, batch)
@@ -245,8 +258,8 @@ def generate_current(con):
 
 def main():
     con = sqlite3.connect(DB_PATH)
-    con.executescript(SCHEMA)
     con.execute("PRAGMA journal_mode=WAL")
+    con.executescript(SCHEMA)
     con.commit()
 
     state          = load_state()
