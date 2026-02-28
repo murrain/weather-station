@@ -23,7 +23,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -152,6 +152,140 @@ def clouds_pct(short_forecast):
     return 25
 
 
+# ── Astronomical calculations ─────────────────────────────────────────
+
+def _d2000(dt_utc):
+    """Days since J2000.0 (2000-Jan-1 12:00 UTC)."""
+    j2000 = datetime(2000, 1, 1, 12, 0, tzinfo=timezone.utc)
+    return (dt_utc - j2000).total_seconds() / 86400.0
+
+
+def sun_rise_set(lat, lon, date_obj):
+    """
+    Sunrise/sunset using the USNO algorithm. Accurate to ~1 minute.
+    Returns (sunrise_epoch_utc, sunset_epoch_utc); returns (0, 0) on polar anomaly.
+    """
+    N        = date_obj.timetuple().tm_yday
+    lng_hour = lon / 15.0
+    results  = []
+
+    for is_rise in (True, False):
+        t  = N + ((6 - lng_hour) / 24.0 if is_rise else (18 - lng_hour) / 24.0)
+        M  = (0.9856 * t - 3.289) % 360.0
+        L  = (M + 1.916 * math.sin(math.radians(M))
+              + 0.020 * math.sin(math.radians(2 * M))
+              + 282.634) % 360.0
+        RA = math.degrees(math.atan(0.91764 * math.tan(math.radians(L)))) % 360.0
+        Lq, RAq = (int(L / 90)) * 90, (int(RA / 90)) * 90
+        RA  = (RA + (Lq - RAq)) / 15.0
+
+        sinDec = 0.39782 * math.sin(math.radians(L))
+        cosDec = math.cos(math.asin(sinDec))
+        cosH   = (math.cos(math.radians(90.833)) - sinDec * math.sin(math.radians(lat))) / (cosDec * math.cos(math.radians(lat)))
+        if cosH > 1 or cosH < -1:
+            results.append(0)
+            continue
+
+        H      = (360.0 - math.degrees(math.acos(cosH))) / 15.0 if is_rise else math.degrees(math.acos(cosH)) / 15.0
+        T_mean = H + RA - 0.06571 * t - 6.622
+        ut     = (T_mean - lng_hour) % 24.0
+
+        midnight = datetime(date_obj.year, date_obj.month, date_obj.day, tzinfo=timezone.utc)
+        results.append(int(midnight.timestamp() + ut * 3600))
+
+    return results[0], results[1]
+
+
+def _moon_equatorial(d):
+    """
+    Moon RA and declination (degrees) for d days since J2000.0.
+    Simplified algorithm; accurate to ~1 degree.
+    """
+    N = (125.1228 - 0.0529538083  * d) % 360   # Long of ascending node
+    w = (318.0634 + 0.1643573223  * d) % 360   # Arg of perigee
+    M = (115.3654 + 13.0649929509 * d) % 360   # Mean anomaly
+    e, i = 0.054900, 5.1454                     # Eccentricity, inclination
+
+    # Eccentric anomaly via Newton's method
+    E = M + math.degrees(e * math.sin(math.radians(M))) * (1 + e * math.cos(math.radians(M)))
+    for _ in range(5):
+        dE = (E - math.degrees(e * math.sin(math.radians(E))) - M) / (1 - e * math.cos(math.radians(E)))
+        E -= dE
+        if abs(dE) < 1e-6:
+            break
+
+    xv = math.cos(math.radians(E)) - e
+    yv = math.sqrt(1 - e * e) * math.sin(math.radians(E))
+    v  = math.degrees(math.atan2(yv, xv)) % 360
+
+    lon_orb        = math.radians(v + w)
+    Nrad, irad     = math.radians(N), math.radians(i)
+    xh = math.cos(Nrad) * math.cos(lon_orb) - math.sin(Nrad) * math.sin(lon_orb) * math.cos(irad)
+    yh = math.sin(Nrad) * math.cos(lon_orb) + math.cos(Nrad) * math.sin(lon_orb) * math.cos(irad)
+    zh = math.sin(lon_orb) * math.sin(irad)
+
+    lon_ecl = math.degrees(math.atan2(yh, xh)) % 360
+    lat_ecl = math.degrees(math.atan2(zh, math.sqrt(xh * xh + yh * yh)))
+
+    ecl = math.radians(23.4393 - 3.563e-7 * d)
+    x   = math.cos(math.radians(lon_ecl)) * math.cos(math.radians(lat_ecl))
+    y   = (math.sin(math.radians(lon_ecl)) * math.cos(math.radians(lat_ecl)) * math.cos(ecl)
+           - math.sin(math.radians(lat_ecl)) * math.sin(ecl))
+    z   = (math.sin(math.radians(lon_ecl)) * math.cos(math.radians(lat_ecl)) * math.sin(ecl)
+           + math.sin(math.radians(lat_ecl)) * math.cos(ecl))
+
+    ra  = math.degrees(math.atan2(y, x)) % 360
+    dec = math.degrees(math.asin(max(-1.0, min(1.0, z))))
+    return ra, dec
+
+
+def _moon_altitude(lat, lon, d, ra, dec):
+    """Moon's altitude above horizon in degrees."""
+    GMST = (280.46061837 + 360.98564736629 * d) % 360
+    H    = (GMST + lon - ra) % 360
+    sin_alt = (math.sin(math.radians(dec)) * math.sin(math.radians(lat))
+               + math.cos(math.radians(dec)) * math.cos(math.radians(lat)) * math.cos(math.radians(H)))
+    return math.degrees(math.asin(max(-1.0, min(1.0, sin_alt))))
+
+
+def moon_rise_set(lat, lon, date_obj):
+    """
+    Moonrise/moonset found by scanning altitudes every 15 minutes.
+    Returns (rise_epoch, set_epoch); either is 0 if not found that day.
+    """
+    midnight = datetime(date_obj.year, date_obj.month, date_obj.day, tzinfo=timezone.utc)
+    horizon  = -0.583  # degrees (standard moonrise refraction correction)
+    rise_ep, set_ep = 0, 0
+    prev_alt = None
+
+    for i in range(97):  # 0–24 h in 15-min steps
+        t        = midnight + timedelta(minutes=15 * i)
+        d        = _d2000(t)
+        ra, dec  = _moon_equatorial(d)
+        alt      = _moon_altitude(lat, lon, d, ra, dec)
+
+        if prev_alt is not None:
+            if prev_alt <= horizon < alt and not rise_ep:
+                frac    = (horizon - prev_alt) / (alt - prev_alt)
+                rise_ep = int(midnight.timestamp() + (i - 1 + frac) * 15 * 60)
+            elif prev_alt >= horizon > alt and not set_ep:
+                frac   = (prev_alt - horizon) / (prev_alt - alt)
+                set_ep = int(midnight.timestamp() + (i - 1 + frac) * 15 * 60)
+        prev_alt = alt
+
+    return rise_ep, set_ep
+
+
+def moon_phase_fraction(date_obj):
+    """
+    Moon phase: 0.0/1.0 = new moon, 0.25 = first quarter, 0.5 = full moon.
+    """
+    known_new = datetime(2000, 1, 6, 18, 14, tzinfo=timezone.utc)
+    synodic   = 29.530588853
+    dt        = datetime(date_obj.year, date_obj.month, date_obj.day, 12, 0, tzinfo=timezone.utc)
+    return ((dt - known_new).total_seconds() / 86400.0 % synodic) / synodic
+
+
 # ── Data loading ──────────────────────────────────────────────────────
 
 def load_json(path):
@@ -211,10 +345,13 @@ def build_current_block(units="metric"):
     dp_c = dew_point_c(temp_c, humidity)
     fl_c = feels_like_c(temp_c, humidity, wind_ms)
 
+    today = datetime.now(timezone.utc).date()
+    sunrise_ep, sunset_ep = sun_rise_set(LOCATION_LAT, LOCATION_LON, today)
+
     return {
         "dt":         int(time.time()),
-        "sunrise":    0,
-        "sunset":     0,
+        "sunrise":    sunrise_ep,
+        "sunset":     sunset_ep,
         "temp":       apply_temp(temp_c, units),
         "feels_like": apply_temp(fl_c,   units),
         "pressure":   pressure,
@@ -275,13 +412,22 @@ def build_daily_list(units="metric"):
         except Exception:
             dt_ts = int(time.time())
 
+        try:
+            cal_date = datetime.fromisoformat(date_str).date()
+        except Exception:
+            cal_date = datetime.now(timezone.utc).date()
+
+        sunrise_ep, sunset_ep     = sun_rise_set(LOCATION_LAT, LOCATION_LON, cal_date)
+        moonrise_ep, moonset_ep   = moon_rise_set(LOCATION_LAT, LOCATION_LON, cal_date)
+        phase                     = moon_phase_fraction(cal_date)
+
         daily.append({
             "dt":         dt_ts,
-            "sunrise":    0,
-            "sunset":     0,
-            "moonrise":   0,
-            "moonset":    0,
-            "moon_phase": 0,
+            "sunrise":    sunrise_ep,
+            "sunset":     sunset_ep,
+            "moonrise":   moonrise_ep,
+            "moonset":    moonset_ep,
+            "moon_phase": round(phase, 2),
             "summary":    short,
             "temp": {
                 "day":   apply_temp(day_c or max_c,   units),
