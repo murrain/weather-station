@@ -7,8 +7,8 @@ import org.kde.kirigami as Kirigami
 Item {
     id: full
 
-    implicitWidth:  Kirigami.Units.gridUnit * 24
-    implicitHeight: Kirigami.Units.gridUnit * 24
+    implicitWidth:  Kirigami.Units.gridUnit * 14
+    implicitHeight: Kirigami.Units.gridUnit * 14
 
     // ── Empty / error state ────────────────────────────────────────
     PlasmaComponents.Label {
@@ -24,14 +24,15 @@ Item {
     ColumnLayout {
         anchors {
             fill: parent
-            margins: Kirigami.Units.largeSpacing
+            margins: Kirigami.Units.mediumSpacing
         }
         visible: root.weatherData !== null
-        spacing: Kirigami.Units.smallSpacing
+        spacing: 0
 
         // ── Header: title + last updated ──────────────────────────
         RowLayout {
             Layout.fillWidth: true
+            Layout.bottomMargin: Kirigami.Units.smallSpacing
 
             PlasmaComponents.Label {
                 text: "Weather Station"
@@ -48,37 +49,34 @@ Item {
             }
         }
 
-        // ── Current: icon + temp | stats ──────────────────────────
+        // ── Current: icon | temp+condition | stats ────────────────
         RowLayout {
             Layout.fillWidth: true
             spacing: Kirigami.Units.gridUnit
 
-            // Icon + temperature + condition
+            // Icon — matches height of the text column
+            Kirigami.Icon {
+                source: root.kdeIcon
+                implicitWidth:  textColumn.height
+                implicitHeight: textColumn.height
+                Layout.alignment: Qt.AlignTop
+            }
+
+            // Temp + condition + hi/lo + feels like
             ColumnLayout {
-                spacing: 2
+                id: textColumn
+                spacing: 1
                 Layout.alignment: Qt.AlignTop
 
-                RowLayout {
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Kirigami.Icon {
-                        source: root.kdeIcon
-                        implicitWidth:  Kirigami.Units.iconSizes.huge
-                        implicitHeight: Kirigami.Units.iconSizes.huge
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    PlasmaComponents.Label {
-                        text: root.currentTempStr
-                        font.pointSize: Kirigami.Theme.defaultFont.pointSize * 3.2
-                        font.weight: Font.Light
-                        lineHeight: 1
-                    }
+                PlasmaComponents.Label {
+                    text: root.currentTempPrecise
+                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 3.0
+                    font.weight: Font.Light
+                    lineHeight: 1
                 }
 
                 PlasmaComponents.Label {
                     text: root.conditionStr
-                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.1
                     opacity: 0.75
                 }
 
@@ -89,25 +87,26 @@ Item {
                     text: {
                         if (!root.weatherData || !root.weatherData.daily) return ""
                         var d = root.weatherData.daily[0]
-                        return "↑ " + root.formatTemp(d.temp.max) + "   ↓ " + root.formatTemp(d.temp.min)
+                        return "↑ " + root.formatTemp(d.temp.max) + "  ↓ " + root.formatTemp(d.temp.min)
                     }
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
                     opacity: 0.6
                 }
 
                 PlasmaComponents.Label {
                     text: root.weatherData
-                        ? "Feels like " + root.formatTemp(root.weatherData.current.feels_like)
+                        ? "Feels like " + root.formatTempPrecise(root.weatherData.current.feels_like)
                         : ""
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                     opacity: 0.55
                 }
             }
 
-            // Stats — single 2-column grid
+            // Stats — 2-column grid
             GridLayout {
                 Layout.alignment: Qt.AlignTop
                 columns: 2
-                rowSpacing: Kirigami.Units.smallSpacing / 2
+                rowSpacing: 1
                 columnSpacing: Kirigami.Units.largeSpacing
 
                 PlasmaComponents.Label { text: "Humidity"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
@@ -120,14 +119,14 @@ Item {
                 PlasmaComponents.Label { text: root.weatherData ? root.weatherData.current.pressure + " hPa" : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
 
                 PlasmaComponents.Label { text: "Dew point"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
-                PlasmaComponents.Label { text: root.weatherData ? root.formatTemp(root.weatherData.current.dew_point) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
+                PlasmaComponents.Label { text: root.weatherData ? root.formatTempPrecise(root.weatherData.current.dew_point) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
 
                 PlasmaComponents.Label { text: "Visibility"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
                 PlasmaComponents.Label { text: root.weatherData ? root.formatVisibility(root.weatherData.current.visibility) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
             }
         }
 
-        // ── Divider ────────────────────────────────────────────────
+        // ── Divider ───────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
             height: 1
@@ -135,44 +134,12 @@ Item {
             opacity: 0.12
         }
 
-        // ── 7-day forecast with day/night split ────────────────────
+        // ── 7-day forecast ────────────────────────────────────────
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
 
-            // Day/Night labels column
-            ColumnLayout {
-                Layout.alignment: Qt.AlignTop
-                Layout.fillWidth: false
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-                spacing: 0
-
-                // Spacer to align with date + day name rows
-                Item {
-                    Layout.preferredHeight: dayLabelMetrics.height * 2 + Kirigami.Units.smallSpacing
-                }
-
-                PlasmaComponents.Label {
-                    text: "Day"
-                    font.pointSize: Kirigami.Theme.smallFont.pointSize
-                    font.weight: Font.Medium
-                    opacity: 0.55
-                    Layout.preferredHeight: dayIconSize + dayTempMetrics.height + dayPopMetrics.height + Kirigami.Units.smallSpacing
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                PlasmaComponents.Label {
-                    text: "Night"
-                    font.pointSize: Kirigami.Theme.smallFont.pointSize
-                    font.weight: Font.Medium
-                    opacity: 0.55
-                    Layout.preferredHeight: dayIconSize + dayTempMetrics.height + dayPopMetrics.height + Kirigami.Units.smallSpacing
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
-
-            // Forecast columns
             Repeater {
                 model: root.weatherData
                     ? Math.min(root.weatherData.daily.length, 7)
@@ -180,7 +147,7 @@ Item {
 
                 delegate: ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 0
+                    spacing: 1
 
                     // Calendar date
                     PlasmaComponents.Label {
@@ -200,103 +167,85 @@ Item {
                         opacity: index === 0 ? 1.0 : 0.65
                     }
 
-                    // ── Day section ──
-                    ColumnLayout {
-                        Layout.preferredHeight: dayIconSize + dayTempMetrics.height + dayPopMetrics.height + Kirigami.Units.smallSpacing
-                        spacing: 1
-
-                        Kirigami.Icon {
-                            Layout.alignment: Qt.AlignHCenter
-                            source: {
-                                var d = root.weatherData.daily[index]
-                                if (d.day_detail && d.day_detail.weather && d.day_detail.weather.length > 0)
-                                    return root.owmIconToKde(d.day_detail.weather[0].icon)
-                                return root.owmIconToKde((d.weather && d.weather.length > 0) ? d.weather[0].icon : null)
-                            }
-                            implicitWidth:  dayIconSize
-                            implicitHeight: dayIconSize
+                    // ── Day cell ──
+                    Kirigami.Icon {
+                        Layout.alignment: Qt.AlignHCenter
+                        source: {
+                            var d = root.weatherData.daily[index]
+                            if (d.day_detail && d.day_detail.weather && d.day_detail.weather.length > 0)
+                                return root.owmIconToKde(d.day_detail.weather[0].icon)
+                            return root.owmIconToKde((d.weather && d.weather.length > 0) ? d.weather[0].icon : null)
                         }
-
-                        PlasmaComponents.Label {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: root.formatTemp(root.weatherData.daily[index].temp.max)
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        }
-
-                        PlasmaComponents.Label {
-                            Layout.alignment: Qt.AlignHCenter
-                            readonly property real pop: {
-                                var d = root.weatherData.daily[index]
-                                if (d.day_detail) return d.day_detail.pop || 0
-                                return d.pop || 0
-                            }
-                            text: Math.round(pop * 100) + "%"
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            color: pop > 0.4 ? Kirigami.Theme.linkColor : Kirigami.Theme.textColor
-                            opacity: pop > 0.4 ? 1.0 : 0.45
-                        }
+                        implicitWidth:  dayIconSize
+                        implicitHeight: dayIconSize
                     }
 
-                    // ── Night section ──
-                    ColumnLayout {
-                        Layout.preferredHeight: dayIconSize + dayTempMetrics.height + dayPopMetrics.height + Kirigami.Units.smallSpacing
-                        spacing: 1
+                    PlasmaComponents.Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.formatTemp(root.weatherData.daily[index].temp.max)
+                        font.pointSize: Kirigami.Theme.defaultFont.pointSize
+                    }
 
-                        Kirigami.Icon {
-                            Layout.alignment: Qt.AlignHCenter
-                            source: {
-                                var d = root.weatherData.daily[index]
-                                if (d.night_detail && d.night_detail.weather && d.night_detail.weather.length > 0)
-                                    return root.owmIconToKde(d.night_detail.weather[0].icon)
-                                return root.owmIconToKde((d.weather && d.weather.length > 0) ? d.weather[0].icon : null)
-                            }
-                            implicitWidth:  dayIconSize
-                            implicitHeight: dayIconSize
+                    PlasmaComponents.Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        readonly property real pop: {
+                            var d = root.weatherData.daily[index]
+                            if (d.day_detail) return d.day_detail.pop || 0
+                            return d.pop || 0
                         }
+                        text: Math.round(pop * 100) + "%"
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: pop > 0.4 ? Kirigami.Theme.linkColor : Kirigami.Theme.textColor
+                        opacity: pop > 0.4 ? 1.0 : 0.45
+                    }
 
-                        PlasmaComponents.Label {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: root.formatTemp(root.weatherData.daily[index].temp.night)
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            opacity: 0.7
-                        }
+                    // ── Day/night divider ──
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Kirigami.Units.smallSpacing
+                        Layout.rightMargin: Kirigami.Units.smallSpacing
+                        height: 1
+                        color: Kirigami.Theme.textColor
+                        opacity: 0.08
+                    }
 
-                        PlasmaComponents.Label {
-                            Layout.alignment: Qt.AlignHCenter
-                            readonly property real pop: {
-                                var d = root.weatherData.daily[index]
-                                if (d.night_detail) return d.night_detail.pop || 0
-                                return d.pop || 0
-                            }
-                            text: Math.round(pop * 100) + "%"
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            color: pop > 0.4 ? Kirigami.Theme.linkColor : Kirigami.Theme.textColor
-                            opacity: pop > 0.4 ? 1.0 : 0.45
+                    // ── Night cell ──
+                    Kirigami.Icon {
+                        Layout.alignment: Qt.AlignHCenter
+                        source: {
+                            var d = root.weatherData.daily[index]
+                            if (d.night_detail && d.night_detail.weather && d.night_detail.weather.length > 0)
+                                return root.owmIconToKde(d.night_detail.weather[0].icon)
+                            return root.owmIconToKde((d.weather && d.weather.length > 0) ? d.weather[0].icon : null)
                         }
+                        implicitWidth:  dayIconSize
+                        implicitHeight: dayIconSize
+                    }
+
+                    PlasmaComponents.Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: root.formatTemp(root.weatherData.daily[index].temp.night)
+                        font.pointSize: Kirigami.Theme.defaultFont.pointSize
+                        opacity: 0.7
+                    }
+
+                    PlasmaComponents.Label {
+                        Layout.alignment: Qt.AlignHCenter
+                        readonly property real pop: {
+                            var d = root.weatherData.daily[index]
+                            if (d.night_detail) return d.night_detail.pop || 0
+                            return d.pop || 0
+                        }
+                        text: Math.round(pop * 100) + "%"
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        color: pop > 0.4 ? Kirigami.Theme.linkColor : Kirigami.Theme.textColor
+                        opacity: pop > 0.4 ? 1.0 : 0.45
                     }
                 }
             }
         }
     }
 
-    // ── Shared sizing constants for forecast rows ──────────────────
-    readonly property int dayIconSize: Kirigami.Units.iconSizes.smallMedium
-
-    TextMetrics {
-        id: dayLabelMetrics
-        text: "Today"
-        font.pointSize: Kirigami.Theme.smallFont.pointSize
-    }
-
-    TextMetrics {
-        id: dayTempMetrics
-        text: "-22°C"
-        font.pointSize: Kirigami.Theme.smallFont.pointSize
-    }
-
-    TextMetrics {
-        id: dayPopMetrics
-        text: "100%"
-        font.pointSize: Kirigami.Theme.smallFont.pointSize
-    }
+    // ── Shared sizing constants ───────────────────────────────────
+    readonly property int dayIconSize: Kirigami.Units.iconSizes.large
 }

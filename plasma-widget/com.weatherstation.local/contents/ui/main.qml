@@ -24,6 +24,10 @@ PlasmoidItem {
         ? formatTemp(weatherData.current.temp)
         : "--"
 
+    property string currentTempPrecise: (weatherData && weatherData.current)
+        ? formatTempPrecise(weatherData.current.temp)
+        : "--"
+
     property string conditionStr: (weatherData && weatherData.current
             && weatherData.current.weather && weatherData.current.weather.length > 0)
         ? capitalize(weatherData.current.weather[0].description)
@@ -34,14 +38,14 @@ PlasmoidItem {
     fullRepresentation:    FullRepresentation {}
 
     // On desktop/panel threshold
-    switchWidth:  Kirigami.Units.gridUnit * 24
-    switchHeight: Kirigami.Units.gridUnit * 24
+    switchWidth:  Kirigami.Units.gridUnit * 14
+    switchHeight: Kirigami.Units.gridUnit * 14
 
     Plasmoid.icon:  kdeIcon
     Plasmoid.title: "Weather Station"
 
     toolTipMainText: conditionStr
-    toolTipSubText:  currentTempStr
+    toolTipSubText:  currentTempPrecise
 
     // ── Data fetching ──────────────────────────────────────────────
     Component.onCompleted: fetchWeather()
@@ -124,6 +128,12 @@ PlasmoidItem {
         if (val === undefined || val === null) return "--"
         var u = Plasmoid.configuration.units || "metric"
         return Math.round(val) + (u === "metric" ? "°C" : "°F")
+    }
+
+    function formatTempPrecise(val) {
+        if (val === undefined || val === null) return "--"
+        var u = Plasmoid.configuration.units || "metric"
+        return val.toFixed(1) + (u === "metric" ? "°C" : "°F")
     }
 
     function formatWind(speed) {
