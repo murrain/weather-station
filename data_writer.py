@@ -16,7 +16,7 @@ import time
 from datetime import datetime
 
 from config import (
-    SENSOR_MODEL, VALID_CHANNELS, CHANNEL_NAMES, PACIFIC,
+    SENSOR_MODELS, VALID_CHANNELS, CHANNEL_NAMES, PACIFIC,
     CSV_PATH, DB_PATH, CURRENT_JSON, STATE_PATH,
     POLL_INTERVAL, GENERATE_INTERVAL, WINDOW_SECONDS, STALE_SECONDS, RECENT_COUNT,
 )
@@ -27,6 +27,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
     id          INTEGER PRIMARY KEY,
     model       TEXT    NOT NULL,
+    sensor_id   INTEGER,
     channel     INTEGER NOT NULL,
     temp_c      REAL,
     humidity    REAL,
@@ -40,8 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_readings_channel_time
 """
 
 INSERT = """
-INSERT OR IGNORE INTO readings (model, channel, temp_c, humidity, battery_ok, received_at)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO readings (model, sensor_id, channel, temp_c, humidity, battery_ok, received_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -124,7 +125,7 @@ def import_new_rows(con, state):
 
         for row in reader:
             model = row.get("model", "").strip()
-            if model != SENSOR_MODEL:
+            if model not in SENSOR_MODELS:
                 continue
 
             channel = safe_int(row.get("channel", ""))
@@ -138,11 +139,12 @@ def import_new_rows(con, state):
             temp_c     = safe_float(row.get("temperature_C"))
             humidity   = safe_float(row.get("humidity"))
             battery_ok = safe_int(row.get("battery_ok"))
+            sensor_id  = safe_int(row.get("id"))
 
             if temp_c is None and humidity is None:
                 continue
 
-            batch.append((model, channel, temp_c, humidity, battery_ok, received_at))
+            batch.append((model, sensor_id, channel, temp_c, humidity, battery_ok, received_at))
 
         new_offset = f.tell()
 

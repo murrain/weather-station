@@ -14,7 +14,7 @@ import sqlite3
 import sys
 from datetime import datetime
 
-from config import SENSOR_MODEL, VALID_CHANNELS, PACIFIC
+from config import SENSOR_MODELS, VALID_CHANNELS, PACIFIC
 
 BATCH_SIZE = 5000
 
@@ -22,6 +22,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
     id          INTEGER PRIMARY KEY,
     model       TEXT    NOT NULL,
+    sensor_id   INTEGER,
     channel     INTEGER NOT NULL,
     temp_c      REAL,
     humidity    REAL,
@@ -37,8 +38,8 @@ CREATE INDEX IF NOT EXISTS idx_readings_channel_time
 """
 
 INSERT = """
-INSERT OR IGNORE INTO readings (model, channel, temp_c, humidity, battery_ok, received_at)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO readings (model, sensor_id, channel, temp_c, humidity, battery_ok, received_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -87,7 +88,7 @@ def migrate(csv_path, db_path):
                 print(f"  {total:>10,} rows scanned   {inserted:>8,} inserted", flush=True)
 
             # Filter to sensor model and valid channels
-            if row.get("model", "").strip() != SENSOR_MODEL:
+            if row.get("model", "").strip() not in SENSOR_MODELS:
                 skipped += 1
                 continue
 
@@ -104,6 +105,7 @@ def migrate(csv_path, db_path):
             temp_c     = safe_float(row.get("temperature_C"))
             humidity   = safe_float(row.get("humidity"))
             battery_ok = safe_int(row.get("battery_ok"))
+            sensor_id  = safe_int(row.get("id"))
 
             # Skip rows with no useful data
             if temp_c is None and humidity is None:
@@ -111,7 +113,7 @@ def migrate(csv_path, db_path):
                 continue
 
             model = row.get("model", "").strip()
-            batch.append((model, channel, temp_c, humidity, battery_ok, received_at))
+            batch.append((model, sensor_id, channel, temp_c, humidity, battery_ok, received_at))
 
             if len(batch) >= BATCH_SIZE:
                 before = con.total_changes
