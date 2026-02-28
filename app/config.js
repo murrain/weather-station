@@ -15,5 +15,10 @@
       tempBandHysteresisC: 0.3,
       humidityBandHysteresisPct: 2,
     },
+    nws: {
+      fetchIntervalMs: 5 * 60 * 1000,
+      dataFile: "nws_forecast.json",
+      staleAfterMs: 90 * 60 * 1000,
+    },
   };
 })(window);

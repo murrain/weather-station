@@ -5,367 +5,9 @@
   const recentByDay = {};
   let generationCounter = 0;
 
-  const DAILY_THEMES = [
-    { name: "harbor", motif: ["salt light", "rope creak", "quiet tide"] },
-    { name: "orchard", motif: ["leaf shade", "fruit skin", "dusty path"] },
-    { name: "desert", motif: ["stone heat", "long horizon", "dry wind"] },
-    { name: "alpine", motif: ["pine air", "ridge shadow", "thin light"] },
-    { name: "prairie", motif: ["open field", "grass hush", "broad sky"] },
-    {
-      name: "rainstreet",
-      motif: ["wet pavement", "window glow", "drip rhythm"],
-    },
-    { name: "woodsmoke", motif: ["cedar smoke", "ember red", "night porch"] },
-    { name: "coastline", motif: ["fog edge", "cold surf", "gull track"] },
-    { name: "riverbend", motif: ["slow current", "reed line", "bank mud"] },
-    {
-      name: "cityglass",
-      motif: ["neon reflection", "train hum", "late corner"],
-    },
-    { name: "meadow", motif: ["tall clover", "soft pollen", "bee arc"] },
-    {
-      name: "winteryard",
-      motif: ["frost rail", "bare branch", "quiet gutter"],
-    },
-  ];
-
-  const vocab = {
-    openerByTime: {
-      "late-night": [
-        "Late night leans close",
-        "Past midnight, the world exhales",
-        "In the small hours, silence blooms",
-        "After the last porch light blinks out",
-        "When streets go thin and secret",
-      ],
-      dawn: [
-        "At first light",
-        "In early dawn's pale gold",
-        "As dawn lifts its bright shoulders",
-        "At the pearl edge of morning",
-        "Before daylight fully names the day",
-      ],
-      morning: [
-        "This morning",
-        "Through morning's clear throat",
-        "Morning air arrives singing",
-        "In clear, unhurried light",
-        "By breakfast hour, the sky is awake",
-      ],
-      afternoon: [
-        "This afternoon",
-        "In the honey of afternoon light",
-        "By midday's bright insistence",
-        "Across the warm shoulder of day",
-        "Under a high and brazen sun",
-      ],
-      evening: [
-        "This evening",
-        "At dusk, when colors loosen",
-        "As evening gathers its velvet",
-        "At blue-hour's hush",
-        "Toward nightfall's open curtain",
-      ],
-      night: [
-        "Tonight",
-        "After dark, the air turns lyrical",
-        "In the night air, every sound glows",
-        "Once the sky deepens to ink",
-        "Beneath streetlamp halos and moonlight",
-      ],
-    },
-    moonOpeners: [
-      "under a {moon}",
-      "beneath the {moon}",
-      "with a {moon} overhead",
-      "while the {moon} hangs low",
-      "as the {moon} drifts above",
-    ],
-    tempTexture: {
-      freezing: [
-        "freezing and bright as glass",
-        "frost-edged and feral",
-        "bitter, still, and silver",
-        "hard-cold with a clean bite",
-        "winter-sharp and glittering",
-      ],
-      cold: [
-        "cold and clean",
-        "brisk with a quick pulse",
-        "coat-button weather",
-        "chill-leaning and alert",
-        "cold with a playful bite",
-      ],
-      cool: [
-        "cool and steady",
-        "crisp as a fresh page",
-        "cool-leaning and lucid",
-        "lightly chilled, lightly wild",
-        "cool with a silk edge",
-      ],
-      mild: [
-        "mild and easy",
-        "gentle and generous",
-        "softly balanced",
-        "temperate as a kind thought",
-        "easygoing and open-hearted",
-      ],
-      warm: [
-        "warm and open",
-        "sun-softened and radiant",
-        "warm-leaning and golden",
-        "comfortably warm, almost glowing",
-        "warm with slow dancing momentum",
-      ],
-      hot: [
-        "hot and persistent",
-        "summer-heavy and heady",
-        "heat-forward and restless",
-        "sun-weighted and electric",
-        "hot with a bright shimmer",
-      ],
-      scorching: [
-        "scorching and untamed",
-        "blazing with fierce intent",
-        "hard-heat and thunderous light",
-        "near-searing and relentless",
-        "sun-hammered and mythic",
-      ],
-    },
-    humidityTexture: {
-      dry: [
-        "dry air",
-        "low, thirsty moisture",
-        "parched and papery air",
-        "thin humidity",
-        "quick-evaporating breath",
-      ],
-      comfortable: [
-        "comfortable moisture",
-        "easy humidity",
-        "a light and friendly dampness",
-        "lightly humid air",
-        "balanced-leaning moisture",
-      ],
-      balanced: [
-        "balanced humidity",
-        "middle-range moisture",
-        "steady, breathing moisture",
-        "calm humidity",
-        "well-mannered wetness",
-      ],
-      humid: [
-        "humid air",
-        "noticeable moisture",
-        "thickening humidity",
-        "moisture-rich air",
-        "air with velvet weight",
-      ],
-      saturated: [
-        "very humid air",
-        "saturated moisture",
-        "steam-heavy humidity",
-        "dense wet air",
-        "almost-rain-born moisture",
-      ],
-    },
-    comfortByCombo: {
-      muggy: [
-        "Warmth and moisture are dancing close; the air feels lush and heavy.",
-        "The day wraps itself around you like warm velvet.",
-        "Shade will feel like a small mercy and a gift.",
-        "Every movement meets a soft, tropical resistance.",
-        "The atmosphere is thick with green-house energy.",
-      ],
-      dampChill: [
-        "Cold and moisture braid together into a blue-edged chill.",
-        "The air lands damp on skin and settles in the bones.",
-        "Window glass and railings will hold the cold like memory.",
-        "Layers will feel kinder than the numbers suggest.",
-        "The weather carries a quiet, melancholic bite.",
-      ],
-      dryHeat: [
-        "The dry heat is clean-edged and fierce.",
-        "Sunlight strikes like a bright bell on stone.",
-        "Shade will feel like stepping into a new chapter.",
-        "Hydration matters; the air is quietly demanding.",
-        "Surfaces in direct sun will glow with stored fire.",
-      ],
-      steady: [
-        "The weather is balanced enough to wander in.",
-        "Conditions hold a calm, generous center.",
-        "Nothing is shouting; everything is humming.",
-        "This is a breathable, companionable stretch of day.",
-        "The air feels steady, like a hand at your back.",
-      ],
-    },
-    closers: [
-      "The day feels alive, as if the sky has a pulse.",
-      "It is weather that invites you to look up and keep looking.",
-      "Even ordinary corners feel newly enchanted.",
-      "The atmosphere carries both mischief and tenderness.",
-      "The whole hour feels handwritten.",
-      "The world seems to be speaking in bright, wind-bent metaphors.",
-      "You can feel the moment widening while you stand in it.",
-      "It leaves a luminous fingerprint on memory.",
-      "Somewhere between whimsy and wildness, this weather sings.",
-      "The air arrives like a story with its sleeves rolled up.",
-    ],
-    zeitgeistByTime: {
-      "late-night": [
-        "The hour turns intimate, unrushed, and a little feral.",
-        "Moonlight makes everything feel quietly conspiratorial.",
-        "It feels like a secret shared with the dark.",
-      ],
-      dawn: [
-        "Everything feels like it is beginning again, bright with possibility.",
-        "The first pulse of morning feels brave and clean.",
-        "The air carries that unmistakable sense of becoming.",
-      ],
-      morning: [
-        "The mood is clear-eyed and full of momentum.",
-        "The day feels newly minted and eager.",
-        "Everything in the air points forward.",
-      ],
-      afternoon: [
-        "The afternoon arrives bold, sunlit, and unafraid.",
-        "The hour carries confident heat and open sky.",
-        "The day stands tall and vivid.",
-      ],
-      evening: [
-        "It feels cinematic: tender light, long shadows, open heart.",
-        "Evening moves like a quiet encore.",
-        "The hour glows with reflective warmth.",
-      ],
-      night: [
-        "The night feels deep and luminous, equal parts hush and wonder.",
-        "Night turns the ordinary electric.",
-        "The hour is dreamy, daring, and alive.",
-      ],
-    },
-    stepOutsideByTime: {
-      "late-night": [
-        "The moment you step outside, the night wraps around you like ink and velvet.",
-        "Step outside now and the dark feels close, intimate, and electric.",
-        "Outside, the late hour greets you with a hush that almost glows.",
-      ],
-      dawn: [
-        "The moment you step outside, dawn opens like a bright secret.",
-        "Step outside now and the morning edge feels fresh and full of promise.",
-        "Outside, first light touches everything with a quiet spark.",
-      ],
-      morning: [
-        "The moment you step outside, morning meets you with a clear pulse.",
-        "Step outside now and the day feels newly minted around your shoulders.",
-        "Outside, morning air arrives lively and bright.",
-      ],
-      afternoon: [
-        "The moment you step outside, afternoon comes in bold and sunlit.",
-        "Step outside now and the day feels wide, warm, and unapologetic.",
-        "Outside, the light is full-bodied and alive on every surface.",
-      ],
-      evening: [
-        "The moment you step outside, evening softens the edges of everything.",
-        "Step outside now and dusk feels cinematic, tender, and open-hearted.",
-        "Outside, the blue-hour air carries a slow, glowing hush.",
-      ],
-      night: [
-        "The moment you step outside, night feels deep, luminous, and awake.",
-        "Step outside now and the dark hums with quiet wonder.",
-        "Outside, night air turns ordinary streets into small constellations.",
-      ],
-    },
-    bodyFeelByHumidity: {
-      dry: [
-        "On skin, the air feels light and thirsty, almost papery at the edges.",
-        "You feel dryness first: clean, quick, and a little austere.",
-        "The air brushes by with a dry, whisper-thin touch.",
-      ],
-      comfortable: [
-        "On skin, the air feels easy, breathable, and kind.",
-        "The humidity sits in a gentle middle, soft on the lungs.",
-        "It feels balanced on your face and hands, neither clinging nor fleeing.",
-      ],
-      balanced: [
-        "On skin, the moisture feels calm and well-tempered.",
-        "The air has a steady, companionable texture.",
-        "Humidity settles into a balanced rhythm against your body.",
-      ],
-      humid: [
-        "On skin, moisture lingers just enough to feel lush.",
-        "You can feel the humidity gather and hold, velvet-like.",
-        "The air clings gently, warm and alive.",
-      ],
-      saturated: [
-        "On skin, the air lands damp and full, almost rain-ready.",
-        "Humidity wraps around you in a dense, tropical veil.",
-        "The moisture is palpable, rich and close as breath.",
-      ],
-    },
-    highlightByType: {
-      moon: [
-        "The {moon} steals the scene and turns everything silver at the edges.",
-        "Tonight the {moon} is the headline, and every rooftop seems to know it.",
-        "The {moon} hangs like a bright punctuation mark over the whole block.",
-      ],
-      walking: [
-        "It feels like perfect walking weather, the kind that makes you take the long way home.",
-        "This is strolling weather: open-chested, easy, and quietly joyful.",
-        "You could wander for an hour in this and call it medicine.",
-      ],
-      heat: [
-        "The heat is the loudest voice in the room, bright and insistent.",
-        "Sun and air are working in tandem, and you feel it immediately.",
-        "Warmth takes command the moment you step into it.",
-      ],
-      chill: [
-        "The chill arrives first, quick and articulate against your skin.",
-        "Cold writes itself across your hands before anything else.",
-        "The air carries a crisp bite that keeps you fully awake.",
-      ],
-      humidity: [
-        "Moisture is the main character right now, soft and inescapably present.",
-        "The air carries a damp weight that lingers on skin and fabric.",
-        "Humidity rounds every edge and makes the atmosphere feel close.",
-      ],
-      open: [
-        "What stands out is the balance: nothing shouting, everything alive.",
-        "The moment feels harmonized, as if light and air agreed on a key.",
-        "It has that rare composure where weather feels both gentle and awake.",
-      ],
-    },
-  };
-
-  function pad2(num) {
-    return String(num).padStart(2, "0");
-  }
-
-  function getZonedParts(date, timeZone) {
-    const dtf = new Intl.DateTimeFormat("en-US", {
-      timeZone: timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      hour12: false,
-    });
-    const parts = dtf.formatToParts(date);
-    const map = {};
-    for (const p of parts) {
-      if (p.type !== "literal") map[p.type] = p.value;
-    }
-    return {
-      year: Number(map.year),
-      month: Number(map.month),
-      day: Number(map.day),
-      hour: Number(map.hour),
-    };
-  }
-
-  function getDayKey(date, timeZone) {
-    const zoned = getZonedParts(date, timeZone);
-    return `${zoned.year}-${pad2(zoned.month)}-${pad2(zoned.day)}`;
-  }
+  // ---------------------------------------------------------------------------
+  // RNG utilities
+  // ---------------------------------------------------------------------------
 
   function hashString(str) {
     let hash = 2166136261;
@@ -387,70 +29,113 @@
     };
   }
 
-  function pickRandom(items, rand) {
-    const rng = rand || Math.random;
-    return items[Math.floor(rng() * items.length)];
+  function pick(items, rand) {
+    return items[Math.floor(rand() * items.length)];
   }
 
-  function weightedPick(options, rand) {
-    const rng = rand || Math.random;
-    const total = options.reduce((sum, opt) => sum + opt.weight, 0);
-    let roll = rng() * total;
-    for (const opt of options) {
-      roll -= opt.weight;
-      if (roll <= 0) return opt.value;
+  function maybe(prob, rand) {
+    return rand() < prob;
+  }
+
+  function cap(s) {
+    if (!s) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // Ensure string ends with a sentence-ending punctuation mark.
+  function period(s) {
+    if (!s) return s;
+    const t = s.trimEnd();
+    return /[.!?]$/.test(t) ? t : t + ".";
+  }
+
+  // Capitalize and ensure period — the most common transform for standalone sentences.
+  function sent(s) {
+    return period(cap(s));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Date / time helpers
+  // ---------------------------------------------------------------------------
+
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function getZonedParts(date, timeZone) {
+    const dtf = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hour12: false,
+    });
+    const map = {};
+    for (const p of dtf.formatToParts(date)) {
+      if (p.type !== "literal") map[p.type] = p.value;
     }
-    return options[options.length - 1].value;
+    return {
+      year: Number(map.year),
+      month: Number(map.month),
+      day: Number(map.day),
+      hour: Number(map.hour),
+    };
   }
 
-  function rememberPhrase(dayKey, phrase) {
-    if (!recentByDay[dayKey]) recentByDay[dayKey] = [];
-    recentByDay[dayKey].push(phrase);
-    if (recentByDay[dayKey].length > RECENT_LIMIT) {
-      recentByDay[dayKey].shift();
-    }
+  function getDayKey(date, timeZone) {
+    const z = getZonedParts(date, timeZone);
+    return `${z.year}-${pad2(z.month)}-${pad2(z.day)}`;
   }
 
-  function pickWithoutRecent(dayKey, generator, attempts) {
-    const maxAttempts = attempts || 10;
-    const recent = recentByDay[dayKey] || [];
-    let candidate = generator();
-    for (let i = 0; i < maxAttempts; i++) {
-      if (!recent.includes(candidate)) break;
-      candidate = generator();
-    }
-    rememberPhrase(dayKey, candidate);
-    return candidate;
-  }
-
-  function getTimeBand(hours) {
-    if (hours < 5) return "late-night";
-    if (hours < 8) return "dawn";
-    if (hours < 12) return "morning";
-    if (hours < 17) return "afternoon";
-    if (hours < 21) return "evening";
+  function getTimeBand(hour) {
+    if (hour < 5) return "late-night";
+    if (hour < 8) return "dawn";
+    if (hour < 12) return "morning";
+    if (hour < 17) return "afternoon";
+    if (hour < 21) return "evening";
     return "night";
   }
 
-  function getMoonPhaseName(date) {
-    const phaseLengthDays = 29.53058867;
-    const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
-    const daysSinceKnown = (date.getTime() - knownNewMoon) / 86400000;
-    const cyclePos =
-      ((daysSinceKnown % phaseLengthDays) + phaseLengthDays) % phaseLengthDays;
-    const phase = cyclePos / phaseLengthDays;
+  function getSeason(month) {
+    // month: 1-indexed (Jan=1)
+    if (month === 12 || month <= 2) return "winter";
+    if (month <= 5) return "spring";
+    if (month <= 8) return "summer";
+    return "autumn";
+  }
 
-    if (phase < 0.03 || phase >= 0.97) return "new moon";
-    if (phase < 0.22) return "waxing crescent";
-    if (phase < 0.28) return "first quarter";
-    if (phase < 0.47) return "waxing gibbous";
-    if (phase < 0.53) return "full moon";
-    if (phase < 0.72) return "waning gibbous";
-    if (phase < 0.78) return "last quarter";
+  function getMoonPhase(date) {
+    const phaseDays = 29.53058867;
+    const knownNew = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const pos =
+      (((date.getTime() - knownNew) / 86400000) % phaseDays + phaseDays) %
+      phaseDays;
+    const f = pos / phaseDays;
+    if (f < 0.03 || f >= 0.97) return "new moon";
+    if (f < 0.22) return "waxing crescent";
+    if (f < 0.28) return "first quarter";
+    if (f < 0.47) return "waxing gibbous";
+    if (f < 0.53) return "full moon";
+    if (f < 0.72) return "waning gibbous";
+    if (f < 0.78) return "last quarter";
     return "waning crescent";
   }
 
-  function getTemperatureBand(tempC) {
+  function isMoonNotable(phase) {
+    return (
+      phase === "full moon" ||
+      phase === "new moon" ||
+      phase === "first quarter" ||
+      phase === "last quarter"
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Band classifiers
+  // ---------------------------------------------------------------------------
+
+  function getTempBand(tempC) {
     if (tempC <= 0) return "freezing";
     if (tempC <= 7) return "cold";
     if (tempC <= 14) return "cool";
@@ -460,184 +145,744 @@
     return "scorching";
   }
 
-  function getHumidityBand(humidity) {
-    if (humidity < 30) return "dry";
-    if (humidity < 45) return "comfortable";
-    if (humidity < 65) return "balanced";
-    if (humidity < 80) return "humid";
+  function getHumidityBand(h) {
+    if (h < 30) return "dry";
+    if (h < 45) return "comfortable";
+    if (h < 65) return "balanced";
+    if (h < 80) return "humid";
     return "saturated";
   }
 
-  function selectComfortLine(tempC, humidity, rand) {
-    if (tempC > 28 && humidity > 70) {
-      return pickRandom(vocab.comfortByCombo.muggy, rand);
-    }
-    if (tempC < 8 && humidity > 70) {
-      return pickRandom(vocab.comfortByCombo.dampChill, rand);
-    }
-    if (tempC > 30 && humidity < 35) {
-      return pickRandom(vocab.comfortByCombo.dryHeat, rand);
-    }
-    return pickRandom(vocab.comfortByCombo.steady, rand);
+  // ---------------------------------------------------------------------------
+  // Anti-repetition
+  // ---------------------------------------------------------------------------
+
+  function rememberPhrase(dayKey, phrase) {
+    if (!recentByDay[dayKey]) recentByDay[dayKey] = [];
+    recentByDay[dayKey].push(phrase);
+    if (recentByDay[dayKey].length > RECENT_LIMIT) recentByDay[dayKey].shift();
   }
 
-  function fillTemplate(template, values) {
-    return template.replace(/\{([a-zA-Z0-9_]+)\}/g, function (_m, key) {
-      return Object.prototype.hasOwnProperty.call(values, key)
-        ? values[key]
-        : "";
-    });
+  function pickWithoutRecent(dayKey, generator) {
+    const recent = recentByDay[dayKey] || [];
+    let candidate = generator();
+    for (let i = 0; i < 10; i++) {
+      if (!recent.includes(candidate)) break;
+      candidate = generator();
+    }
+    rememberPhrase(dayKey, candidate);
+    return candidate;
   }
 
-  function getDailyTheme(dayKey) {
-    const index = hashString(dayKey) % DAILY_THEMES.length;
-    return DAILY_THEMES[index];
+  // ---------------------------------------------------------------------------
+  // Vocabulary
+  // ---------------------------------------------------------------------------
+
+  const vocab = {
+    // Time-of-day scene openers — equal weight, varied structure
+    openerByTime: {
+      "late-night": [
+        "Late night leans in close",
+        "Past midnight, the world exhales",
+        "In the small hours, everything goes quiet and strange",
+        "After the last porch light blinks out",
+        "The night has settled into its deepest register",
+        "At this hour the streets belong to no one in particular",
+      ],
+      dawn: [
+        "At first light",
+        "In early dawn's pale gold",
+        "As dawn lifts its shoulders",
+        "Before daylight fully names the day",
+        "At the grey-blue edge of morning",
+        "The sky is barely deciding what color to be",
+      ],
+      morning: [
+        "This morning",
+        "Through morning's clear throat",
+        "In the clean light of morning",
+        "By this hour the day is awake and moving",
+        "Morning has settled in with a steady hand",
+        "The morning air has its own particular authority",
+      ],
+      afternoon: [
+        "This afternoon",
+        "In the full weight of afternoon",
+        "The day stands at its tallest point",
+        "Under a high and confident sun",
+        "Afternoon has taken hold and isn't letting go",
+        "The day is in full voice now",
+      ],
+      evening: [
+        "This evening",
+        "As evening gathers itself",
+        "At the blue-hour hush",
+        "Toward nightfall, when colors soften",
+        "The light is doing that thing it does at dusk",
+        "Evening arrives like a long exhale",
+      ],
+      night: [
+        "Tonight",
+        "After dark, the air shifts register",
+        "Once the sky deepens to ink",
+        "In the night air",
+        "The night has its own kind of brightness",
+        "At this depth of evening",
+      ],
+    },
+
+    // Temperature as body sensation — what you feel, not what it is
+    tempBody: {
+      freezing: [
+        "the cold finds your ears and cheeks before anything else",
+        "the air has a hard, crystalline bite — it gets into the lungs fast",
+        "your breath comes out in quick white clouds that dissolve ahead of you",
+        "the cold is particular and insistent, not asking permission",
+        "surfaces are sharp-cold to the touch — metal especially",
+      ],
+      cold: [
+        "there's a brisk, clarifying chill that keeps you fully present",
+        "the cold is enough to remind you it's there without being cruel about it",
+        "your face knows immediately; your hands will follow",
+        "it's the kind of cold that rewards movement — stand still and you feel it",
+        "the air arrives direct and cool-edged against exposed skin",
+      ],
+      cool: [
+        "the air is crisp and lightly chilled, easy to breathe",
+        "there's a cool, clean freshness to every inhale",
+        "the temperature is a little below comfortable — pleasantly so",
+        "it's cool enough for a jacket but not cold enough to resent it",
+        "the air has a silk-light edge, neither demanding nor indifferent",
+      ],
+      mild: [
+        "the temperature is easy — neither asking too much nor giving too little",
+        "it's that rare balance where the air just agrees with your skin",
+        "it's mild and quietly generous, the kind of weather that goes unnoticed in the best way",
+        "the air is soft, open-handed, unhurried",
+        "the temperature is what you'd design if you could — just comfortable",
+      ],
+      warm: [
+        "warmth settles into exposed skin within seconds of stepping out",
+        "the air is genuinely warm, not just the absence of cold",
+        "the sun's work is evident — surfaces hold heat and give it back",
+        "it's warm and open, the kind of warmth that makes you want to stay outside longer than planned",
+        "it's warm in a way that loosens the shoulders, slows the pace",
+      ],
+      hot: [
+        "the heat is the first thing — bold, immediate, hard to ignore",
+        "you feel it on the top of the head first, then everywhere else",
+        "the air is thick with heat; even a slow walk builds it faster than it clears",
+        "it's hot in a way that makes shade feel like a small, urgent mercy",
+        "the heat has a weight to it, pressing gently on every exposed inch",
+      ],
+      scorching: [
+        "the heat is aggressive — it meets you at the door and doesn't let up",
+        "within a minute, the sun is working on you in a way you can feel",
+        "the air shimmers slightly; surfaces in direct light are untouchable",
+        "this is serious heat — the kind that demands water and shade and pacing",
+        "everything outside holds stored fire right now; the world is a slow oven",
+      ],
+    },
+
+    // Humidity as sensation — paired with temp context
+    humidityBody: {
+      dry: [
+        "the air is dry enough to feel it on the lips after a minute",
+        "there's a clean, papery dryness to the air — your throat notices it first",
+        "low moisture means the air has a light, quick quality",
+        "dryness gives the air a crispness that reads almost as altitude",
+      ],
+      comfortable: [
+        "the moisture level is just right — the air breathes without any resistance",
+        "humidity is low enough to be kind, high enough to not be arid",
+        "the air feels balanced, neither clinging nor fleeing",
+      ],
+      balanced: [
+        "the air carries a steady, neutral moisture — neither wet nor dry",
+        "humidity settles into a calm middle register that the body accepts easily",
+        "the moisture content is just background, which is exactly what you want",
+      ],
+      humid: [
+        "the humidity is noticeable — the air has a soft, velvet texture",
+        "moisture clings a little, slows evaporation, makes the heat feel closer",
+        "you can feel the dampness gather on skin after a few minutes outside",
+      ],
+      saturated: [
+        "the air is close to saturation — dense and warm against the face",
+        "humidity wraps around you like a second layer you didn't ask for",
+        "the moisture is palpable; you're breathing as much water vapor as air",
+      ],
+    },
+
+    // Wind as narrative element
+    windBody: {
+      calm: [
+        "the air is perfectly still — not a leaf stirring, not a flag moving",
+        "there's no wind at all; the air sits close and undisturbed",
+        "in the absence of wind, every sound carries farther than usual",
+        "the stillness has a quality of held breath",
+      ],
+      light: [
+        "a light {dir} breeze moves through, barely enough to notice but welcome",
+        "there's the gentlest wind from the {dir} — more suggestion than presence",
+        "a faint {dir} drift keeps the air from going stagnant",
+        "the lightest {dir} breeze lifts just enough to feel on a warm cheek",
+      ],
+      moderate: [
+        "a steady {dir} wind keeps the air in easy motion",
+        "the {dir} wind is enough to ruffle hair and collar, nothing more",
+        "there's a consistent {dir} breeze that makes the temperature feel a few degrees kinder",
+        "a moderate {dir} wind reads through the trees in a pleasant, ongoing conversation",
+      ],
+      breezy: [
+        "a brisk {dir} wind makes itself known immediately — hair, jacket, eyes",
+        "the {dir} wind is lively; you'd feel it against your face within a block",
+        "it's breezy from the {dir} in a way that demands something fastened",
+        "a strong {dir} breeze cuts across everything, invigorating and insistent",
+      ],
+      windy: [
+        "the {dir} wind is the loudest voice out there right now — everything else defers to it",
+        "wind from the {dir} pushes back; walking into it takes something extra",
+        "it's genuinely windy — the {dir} gusts are the main event",
+        "the {dir} wind is persistent and structural, changing how everything else feels",
+      ],
+    },
+
+    // Sky as visual/atmospheric context
+    skyContext: {
+      clear: [
+        "under an open, unobstructed sky",
+        "beneath a sky that's clean all the way to the horizon",
+        "with nothing between you and the full depth of the sky",
+        "under clear sky that makes the light direct and unfiltered",
+      ],
+      "partly-cloudy": [
+        "under a partly cloudy sky, light arriving in shifting intervals",
+        "with clouds drifting through — the light goes in and out on its own schedule",
+        "beneath a sky that can't decide between open and covered",
+        "under intermittent cloud that keeps things interesting",
+      ],
+      "mostly-cloudy": [
+        "under a heavy, low ceiling of cloud",
+        "beneath cloud cover that softens everything and flattens the shadows",
+        "under a mostly grey sky that holds the light in rather than letting it through",
+        "with the sky mostly closed off above",
+      ],
+      overcast: [
+        "under a sealed-in overcast that turns the sky into a single flat surface",
+        "beneath a full, even grey that diffuses the light into something ambient and still",
+        "under complete cloud cover — a grey lid over everything",
+        "with the sky locked down in a flat, windowed grey",
+      ],
+      fog: [
+        "in fog that softens every edge and muffles sound and distance",
+        "wrapped in coastal fog that turns the world small and immediate",
+        "in fog — visibility shortened, the familiar made strange",
+        "in a dense grey fog that erases the middle distance entirely",
+      ],
+      rain: [
+        "Rain is falling — steady, unhurried, committed.",
+        "A steady rain has moved in and settled.",
+        "It's raining in that consistent, no-drama way that just keeps going.",
+        "Rain comes down in an even curtain, the kind that means it.",
+      ],
+      "heavy-rain": [
+        "It's raining hard — drums on every surface, soaks through fast.",
+        "Heavy rain has taken over. It's the main event right now.",
+        "The rain is coming down in earnest, without apology.",
+      ],
+      snow: [
+        "Snow is falling — quiet and deliberate, softening the sound of everything.",
+        "It's snowing, and the world is going quieter for it.",
+        "Snow drifts down and redraws all the edges.",
+      ],
+      thunderstorm: [
+        "A thunderstorm is working its way through.",
+        "The sky has gone bruised and electric — a storm is on.",
+        "There's a charged, greenish quality to the light right now.",
+      ],
+    },
+
+    // Moon vocabulary
+    moonContext: [
+      "under a {moon} that turns everything silver at the margins",
+      "with the {moon} doing most of the lighting out there",
+      "the {moon} hangs overhead like a fact you keep forgetting",
+      "beneath a {moon} that makes the ordinary look composed",
+      "the {moon} is the headline tonight — every roof and branch knows it",
+    ],
+
+    // Walking and running feel — what movement actually costs or rewards
+    movementFeel: {
+      freezing: {
+        calm: "Walking, you'd feel the cold find your face within half a block. Running would warm you, but your lungs would work for it.",
+        windy: "Walking into that wind would mean squinting, leaning, working. Even short distances have a cost.",
+        default: "Movement helps — your body generates heat faster than the air can take it — but stop and you'll know it immediately.",
+      },
+      cold: {
+        calm: "A walk would keep you warm if you kept moving. Stop for more than a minute and the chill finds you again.",
+        windy: "Walking is fine if you're dressed for it — the wind does add something you have to account for.",
+        default: "Active enough to stay comfortable, still enough to feel the edge if you slow down.",
+      },
+      cool: {
+        calm: "This is clean, easy walking weather. Your lungs welcome it.",
+        default: "Good conditions for moving — cool enough to be invigorating, mild enough to be sustainable.",
+      },
+      mild: {
+        calm: "This is walking weather — the kind that makes you take the long way home without deciding to.",
+        light: "A walk would feel almost effortless out here, the air doing half the work.",
+        default: "You could run comfortably in this. It's the kind of day that rewards it.",
+      },
+      warm: {
+        calm: "A walk is pleasant but the warmth accumulates — you'd want water if you were going far.",
+        breezy: "The breeze takes enough edge off the warmth to make movement feel reasonable.",
+        default: "Moving in this takes a little more out of you than it looks like it should.",
+      },
+      hot: {
+        calm: "Even a slow walk builds heat faster than the air carries it away. You'd feel it in the back of the throat.",
+        breezy: "The wind takes some edge off, but movement in this heat still costs something.",
+        default: "This is heat that demands respect — go slow, stay hydrated, take the shade when you find it.",
+      },
+      scorching: {
+        default: "Being outside right now is a commitment. The heat meets you at every step and stays close. Water and shade are not optional.",
+      },
+    },
+
+    // Season-aware context — what the season makes of the current condition
+    seasonalNote: {
+      winter: {
+        freezing: "This is winter doing what winter does — no ambiguity, no apology.",
+        cold: "The cold has the weight of the season behind it. It's not going anywhere soon.",
+        cool: "A cool day in winter still carries that low-angled, muted quality — the light stays thin.",
+        mild: "A mild winter day arrives like a brief negotiation, the season offering a temporary concession.",
+        warm: "Warm for this time of year — the kind of day that confuses the body and delights it anyway.",
+      },
+      spring: {
+        freezing: "A freeze this late in the season feels like a dispute — the calendar says one thing, the thermometer another.",
+        cold: "A cold snap against the season's grain, stubbornly winter when everything else is turning.",
+        cool: "Classic spring air — not fully committed to warmth, but getting there.",
+        mild: "Spring at its most reliable: mild and improving, the air carrying a faint promise of heat to come.",
+        warm: "Early warmth, the kind that catches you off guard and makes you forget your jacket.",
+        hot: "Unseasonably hot for spring — the season skipping its middle chapter entirely.",
+      },
+      summer: {
+        cool: "Cool for summer — almost out of character, a small break from the pattern.",
+        mild: "The summer is being relatively gracious today.",
+        warm: "Standard summer warmth, steady and familiar, the season in its typical voice.",
+        hot: "Proper summer heat — unambiguous, committed, entirely itself.",
+        scorching: "The summer at its most serious. This is the heat that defines the season in memory.",
+      },
+      autumn: {
+        warm: "Warm for autumn — borrowed time before the turn. Worth noting, worth savoring.",
+        mild: "A mild autumn day, the season at its most civilized and elegant.",
+        cool: "The cool has the weight of the season in it now. This is autumn meaning it.",
+        cold: "Autumn cold with teeth — the turn is complete, the next chapter already started.",
+        freezing: "A hard frost in autumn — the cold arriving ahead of schedule, unwilling to wait.",
+      },
+    },
+
+    // Thunderstorm texture (replaces rainTexture when it's actually storming)
+    thunderstormTexture: [
+      "When a storm moves through like this, temperature becomes almost irrelevant.",
+      "The rain here is almost secondary to everything happening above it.",
+      "Thunder changes the acoustics of the neighborhood entirely — everything goes wide and electric.",
+    ],
+
+    // Rain-specific texture
+    rainTexture: {
+      cold: [
+        "Cold rain is its own thing — damp and bone-finding in a way that dry cold isn't.",
+        "Rain in cold air lands heavier than it is. You feel it settling in.",
+      ],
+      cool: [
+        "Cool rain falls clean and deliberate, the kind that smells like the ground waking up.",
+        "Rain in this temperature has a particular freshness to it — almost mineral.",
+      ],
+      mild: [
+        "Mild-weather rain is benign enough — you get wet, but it doesn't punish you for it.",
+        "Rain at this temperature is more mood than misery.",
+      ],
+      warm: [
+        "Warm rain is strange and tropical — you barely mind getting wet because the air catches you on the other side.",
+        "Rain when it's warm feels almost like relief, the air finally doing something with all that moisture.",
+      ],
+    },
+
+    // Fog-specific texture
+    fogTexture: [
+      "Fog shortens the world to what's close. Familiar streets become unfamiliar at the edges.",
+      "In fog, sound carries differently — voices, steps, a car door — clearer somehow, more deliberate.",
+      "The fog has a particular smell to it: cold, green, and coastal.",
+      "Visibility is limited but the detail of what's nearby gets sharper by contrast.",
+      "Fog turns everything into silhouette past a certain distance.",
+    ],
+
+    // Snow-specific texture
+    snowTexture: [
+      "Snow muffles things — traffic, footsteps, all the usual urban frequencies go soft.",
+      "The light in snowfall is flat and even, shadowless, almost kind.",
+      "Snow on the ground changes the acoustics of a neighborhood in ways that feel immediately obvious.",
+      "Falling snow has the quality of a held breath — things slow, the air goes careful.",
+    ],
+  };
+
+  // ---------------------------------------------------------------------------
+  // Context builder
+  // ---------------------------------------------------------------------------
+
+  function buildContext(tempC, humidity, date, options, rand) {
+    const timeZone =
+      options && options.timeZone
+        ? options.timeZone
+        : Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const zoned = getZonedParts(date, timeZone);
+    const timeBand = getTimeBand(zoned.hour);
+    const season = getSeason(zoned.month);
+    const moon = getMoonPhase(date);
+    const tempBand = getTempBand(tempC);
+    const humidityBand = getHumidityBand(humidity);
+
+    const wind = (options && options.wind) || null;
+    const windBand = wind ? wind.band || "calm" : null;
+    const windDir = wind ? wind.direction || "" : "";
+    const skyCondition = (options && options.skyCondition) || null;
+    const precipProb = (options && options.precipProb) || 0;
+
+    const isNight =
+      timeBand === "night" ||
+      timeBand === "late-night" ||
+      timeBand === "evening";
+    const moonVisible = isNight && isMoonNotable(moon) && maybe(0.7, rand);
+    const hasSkyData = skyCondition !== null;
+    const isRaining =
+      skyCondition === "rain" ||
+      skyCondition === "heavy-rain" ||
+      skyCondition === "thunderstorm";
+    const isFoggy = skyCondition === "fog";
+    const isSnowing = skyCondition === "snow";
+    const isDramaticallyWindy = windBand === "breezy" || windBand === "windy";
+    const isExtremeTemp =
+      tempBand === "freezing" ||
+      tempBand === "scorching" ||
+      tempBand === "hot";
+    const isPleasant =
+      (tempBand === "mild" || tempBand === "cool") &&
+      !isRaining &&
+      !isFoggy &&
+      !isSnowing &&
+      (!windBand || windBand === "calm" || windBand === "light");
+
+    return {
+      tempC,
+      humidity,
+      tempBand,
+      humidityBand,
+      timeBand,
+      season,
+      moon,
+      moonVisible,
+      wind,
+      windBand,
+      windDir,
+      skyCondition,
+      precipProb,
+      hasSkyData,
+      isRaining,
+      isFoggy,
+      isSnowing,
+      isDramaticallyWindy,
+      isExtremeTemp,
+      isPleasant,
+    };
   }
+
+  // ---------------------------------------------------------------------------
+  // Vocabulary pickers with wind-direction interpolation
+  // ---------------------------------------------------------------------------
+
+  const CARDINAL_NAMES = {
+    N: "north", NNE: "north-northeast", NE: "northeast", ENE: "east-northeast",
+    E: "east", ESE: "east-southeast", SE: "southeast", SSE: "south-southeast",
+    S: "south", SSW: "south-southwest", SW: "southwest", WSW: "west-southwest",
+    W: "west", WNW: "west-northwest", NW: "northwest", NNW: "north-northwest",
+  };
+
+  function expandDir(dir) {
+    return CARDINAL_NAMES[dir] || dir;
+  }
+
+  function pickWindPhrase(windBand, windDir, rand) {
+    const pool = vocab.windBody[windBand] || vocab.windBody["calm"];
+    const raw = pick(pool, rand);
+    return raw.replace(/\{dir\}/g, expandDir(windDir) || "");
+  }
+
+  function pickSkyPhrase(skyCondition, rand) {
+    if (!skyCondition) return null;
+    const pool = vocab.skyContext[skyCondition];
+    return pool ? pick(pool, rand) : null;
+  }
+
+  function pickMovementFeel(tempBand, windBand, skyCondition, rand) {
+    const byTemp = vocab.movementFeel[tempBand];
+    if (!byTemp) return null;
+    if (skyCondition === "rain" || skyCondition === "heavy-rain") {
+      return "You could walk in this if you wanted to — you'd arrive damp, but not broken by it.";
+    }
+    if (byTemp[windBand]) return byTemp[windBand];
+    if (windBand === "breezy" || windBand === "windy") {
+      if (byTemp["windy"]) return byTemp["windy"];
+      if (byTemp["breezy"]) return byTemp["breezy"];
+    }
+    return byTemp["default"] || byTemp[Object.keys(byTemp)[0]];
+  }
+
+  function pickSeasonalNote(season, tempBand, rand) {
+    const bySeason = vocab.seasonalNote[season];
+    if (!bySeason) return null;
+    const note = bySeason[tempBand];
+    return note || null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Narrative arc templates
+  // ---------------------------------------------------------------------------
+
+  function templateRainLead(ctx, rand) {
+    // Opens with rain, blends temp, closes with what movement means
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const rainPhrase = pickSkyPhrase(ctx.skyCondition, rand);
+    const isStorm = ctx.skyCondition === "thunderstorm";
+    const rainTemp = isStorm
+      ? pick(vocab.thunderstormTexture, rand)
+      : pick(vocab.rainTexture[ctx.tempBand] || vocab.rainTexture["mild"], rand);
+    const movement = isStorm
+      ? null // don't invite movement during a thunderstorm
+      : pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand);
+    // Join opener + rain phrase with colon so opener doesn't strand as a fragment
+    const parts = [
+      sent(`${timeOpener}: ${rainPhrase}`),
+      sent(rainTemp),
+    ];
+    if (movement && maybe(0.7, rand)) parts.push(sent(movement));
+    return parts.join(" ");
+  }
+
+  function templateFogScene(ctx, rand) {
+    // Fog as primary character — sensory, close, intimate
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const fogDetail = pick(vocab.fogTexture, rand);
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    return `${timeOpener}: the fog has settled in. ${sent(fogDetail)} ${sent(tempPhrase)}`;
+  }
+
+  function templateSnowScene(ctx, rand) {
+    // Snow as transformation — stillness, light, sound
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const snowPhrase = pickSkyPhrase("snow", rand);
+    const snowDetail = pick(vocab.snowTexture, rand);
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const windLine =
+      ctx.windBand && ctx.windBand !== "calm"
+        ? sent(pickWindPhrase(ctx.windBand, ctx.windDir, rand))
+        : null;
+    const parts = [
+      sent(`${timeOpener}: ${snowPhrase}`),
+      sent(snowDetail),
+      sent(tempPhrase),
+    ];
+    if (windLine) parts.push(windLine);
+    return parts.join(" ");
+  }
+
+  function templateWindLead(ctx, rand) {
+    // Wind is the main character — direction, sky context, what it means for body
+    const windPhrase = pickWindPhrase(ctx.windBand, ctx.windDir, rand);
+    const skyPhrase = ctx.hasSkyData
+      ? pickSkyPhrase(ctx.skyCondition, rand)
+      : null;
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const movement = pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand);
+    const parts = [
+      skyPhrase
+        ? sent(`${cap(windPhrase)}, ${skyPhrase}`)
+        : sent(cap(windPhrase)),
+      sent(tempPhrase),
+    ];
+    if (movement && maybe(0.65, rand)) parts.push(sent(movement));
+    return parts.join(" ");
+  }
+
+  function templateClearNight(ctx, rand) {
+    // Moon + temp + night stillness
+    const moonPhrase = pick(vocab.moonContext, rand).replace(
+      /\{moon\}/g,
+      ctx.moon,
+    );
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const windPhrase =
+      ctx.windBand && ctx.windBand !== "calm"
+        ? pickWindPhrase(ctx.windBand, ctx.windDir, rand)
+        : null;
+    const movement =
+      maybe(0.5, rand)
+        ? pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand)
+        : null;
+    const parts = [sent(`${moonPhrase}. Out here, ${tempPhrase}`)];
+    if (windPhrase) parts.push(sent(windPhrase));
+    if (movement) parts.push(sent(movement));
+    return parts.join(" ");
+  }
+
+  function templateExtremeCold(ctx, rand) {
+    // Lead with the physical sensation of cold, then practical
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const windPhrase =
+      ctx.windBand && ctx.windBand !== "calm"
+        ? pickWindPhrase(ctx.windBand, ctx.windDir, rand)
+        : null;
+    const seasonNote = pickSeasonalNote(ctx.season, ctx.tempBand, rand);
+    const movement = pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand);
+    const parts = [sent(`${timeOpener} — ${tempPhrase}`)];
+    if (windPhrase) parts.push(sent(windPhrase));
+    parts.push(sent(movement || "Staying in motion is the answer."));
+    if (seasonNote && maybe(0.6, rand)) parts.push(sent(seasonNote));
+    return parts.join(" ");
+  }
+
+  function templateExtremeHeat(ctx, rand) {
+    // Heat is relentless — lead with sensation, close with practical truth
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const humidPhrase = pick(vocab.humidityBody[ctx.humidityBand], rand);
+    const movement = pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand);
+    const seasonNote = pickSeasonalNote(ctx.season, ctx.tempBand, rand);
+    const windPhrase =
+      ctx.windBand && ctx.windBand !== "calm"
+        ? pickWindPhrase(ctx.windBand, ctx.windDir, rand)
+        : null;
+    const parts = [sent(`${timeOpener}: ${tempPhrase}`)];
+    if (windPhrase) parts.push(sent(windPhrase));
+    parts.push(sent(humidPhrase));
+    if (movement) parts.push(sent(movement));
+    if (seasonNote && maybe(0.5, rand)) parts.push(sent(seasonNote));
+    return parts.join(" ");
+  }
+
+  function templatePleasantWalk(ctx, rand) {
+    // Mild, open, inviting — built around the pleasure of being outside
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const skyPhrase = ctx.hasSkyData
+      ? pickSkyPhrase(ctx.skyCondition, rand)
+      : null;
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const movement = pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand);
+    const seasonNote = pickSeasonalNote(ctx.season, ctx.tempBand, rand);
+    const humidPhrase = maybe(0.4, rand)
+      ? pick(vocab.humidityBody[ctx.humidityBand], rand)
+      : null;
+    const windPhrase =
+      ctx.windBand && ctx.windBand !== "calm"
+        ? pickWindPhrase(ctx.windBand, ctx.windDir, rand)
+        : null;
+    const opening = skyPhrase
+      ? `${timeOpener}, ${skyPhrase} — ${tempPhrase}.`
+      : `${timeOpener}: ${tempPhrase}.`;
+    const parts = [opening];
+    if (windPhrase) parts.push(sent(windPhrase));
+    if (humidPhrase) parts.push(sent(humidPhrase));
+    if (movement) parts.push(sent(movement));
+    if (seasonNote && maybe(0.5, rand)) parts.push(sent(seasonNote));
+    return parts.join(" ");
+  }
+
+  function templateSeasonalMoment(ctx, rand) {
+    // Fallback — weaves time, temp, sky, and season into a grounded moment
+    const timeOpener = pick(vocab.openerByTime[ctx.timeBand], rand);
+    const tempPhrase = pick(vocab.tempBody[ctx.tempBand], rand);
+    const humidPhrase = pick(vocab.humidityBody[ctx.humidityBand], rand);
+    const skyPhrase = ctx.hasSkyData
+      ? pickSkyPhrase(ctx.skyCondition, rand)
+      : null;
+    const windPhrase =
+      ctx.windBand && ctx.windBand !== "calm" && ctx.windBand
+        ? pickWindPhrase(ctx.windBand, ctx.windDir, rand)
+        : null;
+    const seasonNote = pickSeasonalNote(ctx.season, ctx.tempBand, rand);
+    const movement =
+      maybe(0.5, rand)
+        ? pickMovementFeel(ctx.tempBand, ctx.windBand, ctx.skyCondition, rand)
+        : null;
+    const opening = skyPhrase
+      ? `${timeOpener}, ${skyPhrase} — ${tempPhrase}.`
+      : `${timeOpener}: ${tempPhrase}.`;
+    const parts = [opening];
+    if (windPhrase) parts.push(sent(windPhrase));
+    parts.push(sent(humidPhrase));
+    if (movement) parts.push(sent(movement));
+    if (seasonNote) parts.push(sent(seasonNote));
+    return parts.join(" ");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Template selector
+  // ---------------------------------------------------------------------------
+
+  function selectTemplate(ctx) {
+    if (ctx.isSnowing) return templateSnowScene;
+    if (ctx.isFoggy) return templateFogScene;
+    if (ctx.isRaining || ctx.precipProb >= 50) return templateRainLead;
+    if (ctx.isDramaticallyWindy) return templateWindLead;
+    if (
+      ctx.moonVisible &&
+      (ctx.skyCondition === "clear" || ctx.skyCondition === null)
+    ) {
+      return templateClearNight;
+    }
+    if (ctx.tempBand === "freezing") return templateExtremeCold;
+    if (ctx.tempBand === "scorching" || ctx.tempBand === "hot")
+      return templateExtremeHeat;
+    if (ctx.isPleasant) return templatePleasantWalk;
+    return templateSeasonalMoment;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Seed + generation
+  // ---------------------------------------------------------------------------
 
   function createSeed(dayKey, tempC, humidity) {
     generationCounter += 1;
-    const signature = `${dayKey}|${Math.round(tempC * 10)}|${Math.round(humidity)}|${generationCounter}`;
-    return hashString(signature);
+    const sig = `${dayKey}|${Math.round(tempC * 10)}|${Math.round(humidity)}|${generationCounter}`;
+    return hashString(sig);
   }
 
-  function chooseHighlightType(context, rand) {
-    if (context.moonShowpiece && rand() > 0.2) return "moon";
-    if (context.walkingPerfect) return "walking";
-    if (context.tempBand === "scorching" || context.tempBand === "hot")
-      return "heat";
-    if (
-      context.tempBand === "freezing" ||
-      context.tempBand === "cold" ||
-      (context.tempBand === "cool" && context.humidityBand === "saturated")
-    ) {
-      return "chill";
-    }
-    if (
-      context.humidityBand === "humid" ||
-      context.humidityBand === "saturated" ||
-      context.humidityBand === "dry"
-    ) {
-      return "humidity";
-    }
-    return "open";
-  }
-
-  function createPhrase(tempC, humidity, date, timeZone) {
+  function createPhrase(tempC, humidity, date, options) {
+    const timeZone =
+      options && options.timeZone
+        ? options.timeZone
+        : Intl.DateTimeFormat().resolvedOptions().timeZone;
     const dayKey = getDayKey(date, timeZone);
-    const theme = getDailyTheme(dayKey);
     const rand = mulberry32(createSeed(dayKey, tempC, humidity));
-
-    const timeBand = getTimeBand(getZonedParts(date, timeZone).hour);
-    const moon = getMoonPhaseName(date);
-    const tempBand = getTemperatureBand(tempC);
-    const humidityBand = getHumidityBand(humidity);
-
-    const opener = weightedPick(
-      vocab.openerByTime[timeBand].map(function (value, idx) {
-        return { value, weight: idx === 0 ? 3 : 2 };
-      }),
-      rand,
-    );
-    const moonOpener = fillTemplate(pickRandom(vocab.moonOpeners, rand), {
-      moon,
-    });
-    const tempPhrase = pickRandom(vocab.tempTexture[tempBand], rand);
-    const humidityPhrase = pickRandom(
-      vocab.humidityTexture[humidityBand],
-      rand,
-    );
-    const comfort = selectComfortLine(tempC, humidity, rand);
-    const closer = pickRandom(vocab.closers, rand);
-    const motifLine = `Today's voice carries ${pickRandom(theme.motif, rand)}.`;
-    const zeitgeist = pickRandom(vocab.zeitgeistByTime[timeBand], rand);
-    const stepOutside = fillTemplate(
-      pickRandom(vocab.stepOutsideByTime[timeBand], rand),
-      { opener, moonOpener },
-    );
-    const moonNotable =
-      moon === "full moon" ||
-      moon === "new moon" ||
-      moon === "first quarter" ||
-      moon === "last quarter";
-    const moonRelevantTime =
-      timeBand === "late-night" ||
-      timeBand === "night" ||
-      timeBand === "evening" ||
-      timeBand === "dawn";
-    const includeMoon = moonRelevantTime && (moonNotable || rand() > 0.4);
-    const skyPhrase = includeMoon ? moonOpener : "under an open sky";
-    const weatherLine = `${opener} ${skyPhrase}, the air feels ${tempPhrase}.`;
-    const textureLine = `Around you, ${humidityPhrase} meets ${tempPhrase} in the same breath.`;
-    const bodyFeel = pickRandom(vocab.bodyFeelByHumidity[humidityBand], rand);
-    const walkingPerfect =
-      (timeBand === "morning" ||
-        timeBand === "afternoon" ||
-        timeBand === "evening") &&
-      (tempBand === "mild" || tempBand === "warm") &&
-      (humidityBand === "comfortable" || humidityBand === "balanced");
-    const moonShowpiece =
-      includeMoon &&
-      (moon === "full moon" ||
-        moon === "first quarter" ||
-        moon === "last quarter");
-    const highlightType = chooseHighlightType(
-      {
-        moonShowpiece,
-        walkingPerfect,
-        tempBand,
-        humidityBand,
-      },
-      rand,
-    );
-    const highlightLine = fillTemplate(
-      pickRandom(vocab.highlightByType[highlightType], rand),
-      { moon },
-    );
-
-    const sentencePool = [
-      weatherLine,
-      textureLine,
-      bodyFeel,
-      comfort,
-      zeitgeist,
-      motifLine,
-      closer,
-    ];
-    const targetCount = rand() > 0.4 ? 4 : 3;
-    const sentences = [stepOutside, highlightLine];
-
-    while (sentences.length < targetCount && sentencePool.length > 0) {
-      const next = pickRandom(sentencePool, rand);
-      const idx = sentencePool.indexOf(next);
-      if (idx >= 0) {
-        sentencePool.splice(idx, 1);
-      }
-      if (!sentences.includes(next)) {
-        sentences.push(next);
-      }
-    }
-
-    return sentences.join(" ");
+    const ctx = buildContext(tempC, humidity, date, options, rand);
+    const template = selectTemplate(ctx);
+    return template(ctx, rand);
   }
 
   function generate(tempC, humidity, date, options) {
     if (tempC === null || humidity === null) {
       return "Waiting for enough sensor data to describe conditions.";
     }
-
     const now = date || new Date();
     const timeZone =
       options && options.timeZone
         ? options.timeZone
         : Intl.DateTimeFormat().resolvedOptions().timeZone;
     const dayKey = getDayKey(now, timeZone);
-
     return pickWithoutRecent(dayKey, function () {
-      return createPhrase(tempC, humidity, now, timeZone);
+      return createPhrase(tempC, humidity, now, options);
     });
   }
 
-  global.WeatherNarrative = {
-    generate,
-  };
+  global.WeatherNarrative = { generate };
 })(window);
