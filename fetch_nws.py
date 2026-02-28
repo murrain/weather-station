@@ -63,7 +63,8 @@ def fetch_observations():
 
     props = data.get("properties", {})
 
-    slp = props.get("seaLevelPressure") or props.get("barometricPressure") or {}
+    slp = (props.get("seaLevelPressure") or props.get("barometricPressure")
+           or props.get("altimeterSetting") or {})
     pressure_hpa = round(slp["value"] / 100, 1) if slp.get("value") is not None else None
 
     vis = props.get("visibility") or {}

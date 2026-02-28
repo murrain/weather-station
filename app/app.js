@@ -368,9 +368,13 @@ function updateAdvancedStats() {
     }
 
     if (gustEl) {
-        gustEl.textContent = nwsData?.windGustMph != null
-            ? `${Math.round(nwsData.windGustMph)} mph`
-            : "--";
+        if (nwsData?.windGustMph != null) {
+            gustEl.textContent = `${Math.round(nwsData.windGustMph)} mph`;
+        } else if (nwsData) {
+            gustEl.textContent = "None";
+        } else {
+            gustEl.textContent = "--";
+        }
     }
 
     if (vpdEl) {
