@@ -8,6 +8,9 @@
         <entry name="apiEndpoint" type="String">
             <default>http://192.168.8.30:8002/data/3.0/onecall</default>
         </entry>
+        <entry name="locationName" type="String">
+            <default></default>
+        </entry>
         <entry name="tempUnit" type="String">
             <default>C</default>
         </entry>
