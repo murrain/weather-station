@@ -34,8 +34,8 @@ PlasmoidItem {
     fullRepresentation:    FullRepresentation {}
 
     // On desktop/panel threshold
-    switchWidth:  Kirigami.Units.gridUnit * 34
-    switchHeight: Kirigami.Units.gridUnit * 22
+    switchWidth:  Kirigami.Units.gridUnit * 24
+    switchHeight: Kirigami.Units.gridUnit * 24
 
     Plasmoid.icon:  kdeIcon
     Plasmoid.title: "Weather Station"
