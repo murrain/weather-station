@@ -1,0 +1,17 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "com.weatherstation.local",
+        "Name": "Weather Station",
+        "Description": "Local weather station — current conditions and 7-day forecast from a configurable OpenWeatherMap-compatible API endpoint.",
+        "Icon": "weather-clear",
+        "Category": "Weather",
+        "License": "MIT",
+        "Authors": [
+            {
+                "Name": "weather-station"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
