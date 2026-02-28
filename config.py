@@ -27,5 +27,6 @@ STALE_SECONDS     = WINDOW_SECONDS + 30  # grace period beyond the averaging win
 RECENT_COUNT      = 5        # readings shown in tooltip
 
 # ── NWS ───────────────────────────────────────────────────────────
-NWS_URL      = "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
-NWS_INTERVAL = 20 * 60      # seconds between NWS fetches
+NWS_URL         = "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
+NWS_OBS_STATION = os.environ.get("WEATHER_NWS_OBS", "KCVH")   # nearest ASOS station
+NWS_INTERVAL    = 20 * 60      # seconds between NWS fetches

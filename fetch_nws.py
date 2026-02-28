@@ -13,14 +13,18 @@ import time
 import urllib.error
 import urllib.request
 
-from config import NWS_URL, NWS_JSON, NWS_INTERVAL
+from config import NWS_URL, NWS_OBS_STATION, NWS_JSON, NWS_INTERVAL
 
 TMP_FILE = NWS_JSON + ".tmp"
+OBS_URL  = f"https://api.weather.gov/stations/{NWS_OBS_STATION}/observations/latest"
 
 HEADERS = {
     "User-Agent": "personal-weather-station/1.0 (home dashboard; contact: local)",
     "Accept": "application/geo+json",
 }
+
+# Last successful observation values — preserved across failed fetches.
+_last_obs: dict = {"pressureHpa": None, "visibilityKm": None}
 
 
 def parse_wind_speed_mph(wind_str):
@@ -37,6 +41,39 @@ def parse_wind_speed_mph(wind_str):
         return sum(nums) / len(nums) if nums else 0
     except ValueError:
         return 0
+
+
+def fetch_observations():
+    """Fetch pressure and visibility from the nearest NWS observation station.
+
+    Updates _last_obs in place on success; leaves it unchanged on any failure
+    so callers always have the most recent good values.
+    """
+    global _last_obs
+    req = urllib.request.Request(OBS_URL, headers=HEADERS)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        print(f"[nws] Obs HTTP {exc.code}: {exc.reason} — keeping last values", flush=True)
+        return
+    except Exception as exc:
+        print(f"[nws] Obs error: {exc} — keeping last values", flush=True)
+        return
+
+    props = data.get("properties", {})
+
+    slp = props.get("seaLevelPressure") or props.get("barometricPressure") or {}
+    pressure_hpa = round(slp["value"] / 100, 1) if slp.get("value") is not None else None
+
+    vis = props.get("visibility") or {}
+    visibility_km = round(vis["value"] / 1000, 1) if vis.get("value") is not None else None
+
+    _last_obs = {"pressureHpa": pressure_hpa, "visibilityKm": visibility_km}
+    print(
+        f"[nws] Obs: {pressure_hpa} hPa | vis {visibility_km} km ({NWS_OBS_STATION})",
+        flush=True,
+    )
 
 
 def fetch_and_write():
@@ -61,27 +98,34 @@ def fetch_and_write():
         return
 
     current = periods[0]
-    precip = current.get("probabilityOfPrecipitation") or {}
+    precip         = current.get("probabilityOfPrecipitation") or {}
     wind_speed_mph = parse_wind_speed_mph(current.get("windSpeed", ""))
+    wind_gust_raw  = current.get("windGust") or ""
+    wind_gust_mph  = parse_wind_speed_mph(wind_gust_raw) if wind_gust_raw else None
+
+    fetch_observations()
 
     payload = {
         "fetchedAt": time.time(),
         "current": {
-            "windSpeedMph": wind_speed_mph,
-            "windDirection": current.get("windDirection", ""),
+            "windSpeedMph":              wind_speed_mph,
+            "windGustMph":               wind_gust_mph,
+            "windDirection":             current.get("windDirection", ""),
             "probabilityOfPrecipitation": precip.get("value") if precip.get("value") is not None else 0,
-            "shortForecast": current.get("shortForecast", ""),
-            "isDaytime": current.get("isDaytime", True),
+            "shortForecast":             current.get("shortForecast", ""),
+            "isDaytime":                 current.get("isDaytime", True),
         },
+        "observations": _last_obs,
     }
 
     try:
         with open(TMP_FILE, "w") as f:
             json.dump(payload, f)
         os.replace(TMP_FILE, NWS_JSON)
+        gust_str = f" (gust {wind_gust_mph:.0f})" if wind_gust_mph else ""
         print(
             f"[nws] Updated: {payload['current']['shortForecast']}"
-            f" | wind {wind_speed_mph:.0f} mph {payload['current']['windDirection']}"
+            f" | wind {wind_speed_mph:.0f}{gust_str} mph {payload['current']['windDirection']}"
             f" | precip {payload['current']['probabilityOfPrecipitation']}%",
             flush=True,
         )

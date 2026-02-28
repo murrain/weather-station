@@ -354,6 +354,44 @@ body {
 .warning { color: #ff9f0a; }
 .offline { color: #ff453a; }
 
+/* ── Advanced stats ───────────────────── */
+
+.stats-section {
+    padding: 12px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    justify-content: center;
+}
+
+.stats-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.stat-item i {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.28);
+}
+
+.stat-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.28);
+}
+
 /* ── Footer ───────────────────────────── */
 
 .source-info {

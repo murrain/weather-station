@@ -320,6 +320,68 @@ function updateWeatherNarrative(tempC, humidity) {
     weatherPhrase.textContent = narrativeState.text;
 }
 
+// ── Derived atmospheric metrics ────────────────────────────────────
+function dewPointC(tempC, humidity) {
+    const a = 17.625, b = 243.04;
+    const alpha = Math.log(humidity / 100) + (a * tempC) / (b + tempC);
+    return (b * alpha) / (a - alpha);
+}
+
+function vpdKpa(tempC, humidity) {
+    const es = 0.6108 * Math.exp(17.27 * tempC / (tempC + 237.3));
+    return Math.max(0, es - es * humidity / 100);
+}
+
+function updateAdvancedStats() {
+    const dewEl  = document.getElementById("stat-dewpoint");
+    const presEl = document.getElementById("stat-pressure");
+    const visEl  = document.getElementById("stat-visibility");
+    const gustEl = document.getElementById("stat-gusts");
+    const vpdEl  = document.getElementById("stat-vpd");
+
+    if (dewEl) {
+        if (currentTempC !== null && avgHumidity !== null) {
+            const dpC = dewPointC(currentTempC, avgHumidity);
+            dewEl.textContent = isCelsius()
+                ? `${dpC.toFixed(1)}°C`
+                : `${Math.round(dpC * 9 / 5 + 32)}°F`;
+        } else {
+            dewEl.textContent = "--";
+        }
+    }
+
+    if (presEl) {
+        presEl.textContent = nwsData?.pressureHpa != null
+            ? `${Math.round(nwsData.pressureHpa)} hPa`
+            : "--";
+    }
+
+    if (visEl) {
+        if (nwsData?.visibilityKm != null) {
+            const miles = nwsData.visibilityKm / 1.60934;
+            visEl.textContent = miles >= 10
+                ? `${Math.round(miles)} mi`
+                : `${miles.toFixed(1)} mi`;
+        } else {
+            visEl.textContent = "--";
+        }
+    }
+
+    if (gustEl) {
+        gustEl.textContent = nwsData?.windGustMph != null
+            ? `${Math.round(nwsData.windGustMph)} mph`
+            : "--";
+    }
+
+    if (vpdEl) {
+        if (currentTempC !== null && avgHumidity !== null) {
+            vpdEl.textContent = `${vpdKpa(currentTempC, avgHumidity).toFixed(2)} kPa`;
+        } else {
+            vpdEl.textContent = "--";
+        }
+    }
+}
+
 // ── Background gradient ────────────────────────────────────────────
 function setTemperatureBackground(tempC) {
     if (tempC === null) {
@@ -399,6 +461,7 @@ function updateTemperatureDisplay() {
     if (currentTempC !== null) tempValue.textContent = convertTemp(currentTempC);
     updateSensorStatus();
     updateFeelsLike();
+    updateAdvancedStats();
 }
 
 celsiusBtn.addEventListener("click", () => {
@@ -476,16 +539,20 @@ function fetchNWSData() {
 
             nwsData = {
                 windSpeedMph,
+                windGustMph:   typeof c.windGustMph === "number" ? c.windGustMph : null,
                 windDirection: c.windDirection   || "",
                 windBand,
                 skyCondition,
                 precipProb,
                 shortForecast: c.shortForecast   || "",
                 isDaytime:     c.isDaytime !== false,
+                pressureHpa:   json.observations?.pressureHpa  ?? null,
+                visibilityKm:  json.observations?.visibilityKm ?? null,
             };
 
             updateWeatherIcon();
             updateFeelsLike();
+            updateAdvancedStats();
 
             if (windBand !== prevWindBand || skyCondition !== prevSky) {
                 updateWeatherNarrative(currentTempC, avgHumidity);
@@ -515,6 +582,7 @@ function processCurrentJSON(data) {
     setTemperatureBackground(currentTempC);
     updateSensorStatus();
     updateFeelsLike();
+    updateAdvancedStats();
 
     loadingIndicator.style.display = "none";
 }
