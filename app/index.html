@@ -468,7 +468,10 @@
                         <strong>temperature_data.csv</strong>...</span
                     >
                 </div>
-                <div>Last updated: <span id="update-time">--</span></div>
+                <div>
+                    Last updated (<span id="timezone-label">PST</span>):
+                    <span id="update-time">--</span>
+                </div>
             </div>
         </div>
 
@@ -486,9 +489,12 @@
             const AVERAGE_MINUTES = 5;
             const APP_CONFIG =
                 typeof WEATHER_CONFIG !== "undefined" ? WEATHER_CONFIG : {};
+            const DATA_CONFIG = APP_CONFIG.data || {};
             const NARRATIVE_CONFIG = APP_CONFIG.narrative || {};
-            const UPDATE_INTERVAL =
-                (APP_CONFIG.data && APP_CONFIG.data.updateIntervalMs) || 10000;
+            const UPDATE_INTERVAL = DATA_CONFIG.updateIntervalMs || 10000;
+            const TIMESTAMP_ZONE =
+                DATA_CONFIG.timestampZone || "America/Los_Angeles";
+            const TIMEZONE_LABEL = DATA_CONFIG.timezoneLabel || "PST";
             const NARRATIVE_MIN_HOLD_MS =
                 NARRATIVE_CONFIG.minHoldMs || 5 * 60 * 1000;
             const NARRATIVE_MAX_HOLD_MS =
@@ -594,22 +600,24 @@
             const humidityValue = document.getElementById("humidity-value");
             const updateTime = document.getElementById("update-time");
             const weatherPhrase = document.getElementById("weather-phrase");
+            const timezoneLabel = document.getElementById("timezone-label");
             const celsiusBtn = document.getElementById("celsius-btn");
             const fahrenheitBtn = document.getElementById("fahrenheit-btn");
             const loadingIndicator =
                 document.getElementById("loading-indicator");
+            timezoneLabel.textContent = TIMEZONE_LABEL;
 
             // Luxon timestamp parser
             function parseLocalTimestamp(timestampStr) {
                 // First try SQL format (2025-07-24 22:10:23)
                 let dt = luxon.DateTime.fromSQL(timestampStr, {
-                    zone: "local",
+                    zone: TIMESTAMP_ZONE,
                 });
 
                 // Fallback to ISO if needed
                 if (!dt.isValid)
                     dt = luxon.DateTime.fromISO(timestampStr, {
-                        zone: "local",
+                        zone: TIMESTAMP_ZONE,
                     });
 
                 return dt.isValid ? dt.toJSDate() : null;
@@ -1105,6 +1113,7 @@
                           hour: "2-digit",
                           minute: "2-digit",
                           second: "2-digit",
+                          timeZone: TIMESTAMP_ZONE,
                       })
                     : "--";
 
@@ -1153,6 +1162,7 @@
                                     ).toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",
+                                        timeZone: TIMESTAMP_ZONE,
                                     });
                                     return `${time}: ${convertTemp(reading.value)}${celsiusBtn.classList.contains("active") ? "°C" : "°F"}`;
                                 })
@@ -1191,6 +1201,7 @@
                                     ).toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",
+                                        timeZone: TIMESTAMP_ZONE,
                                     });
                                     return `${time}: ${reading.value.toFixed(1)}%`;
                                 })
