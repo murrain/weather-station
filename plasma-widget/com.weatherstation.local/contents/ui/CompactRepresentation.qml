@@ -9,24 +9,18 @@ MouseArea {
 
     onClicked: root.expanded = !root.expanded
 
-    RowLayout {
+    Kirigami.Icon {
+        id: weatherIcon
+        source: root.kdeIcon
+        anchors.fill: parent
+    }
+
+    PlasmaComponents.Label {
         anchors.centerIn: parent
-        spacing: Kirigami.Units.smallSpacing
-
-        Kirigami.Icon {
-            source: root.kdeIcon
-            implicitWidth:  Math.min(compact.height, compact.width * 0.45)
-            implicitHeight: implicitWidth
-        }
-
-        PlasmaComponents.Label {
-            text: root.currentTempStr
-            font.pixelSize: Math.max(
-                Math.min(compact.height * 0.5, Kirigami.Units.gridUnit * 2),
-                Kirigami.Theme.defaultFont.pixelSize
-            )
-            fontSizeMode: Text.Fit
-            minimumPixelSize: Kirigami.Theme.smallFont.pixelSize
-        }
+        text: root.currentTempStr
+        font.pixelSize: Math.max(compact.height * 0.35, Kirigami.Theme.smallFont.pixelSize)
+        font.weight: Font.Bold
+        style: Text.Outline
+        styleColor: Kirigami.Theme.backgroundColor
     }
 }

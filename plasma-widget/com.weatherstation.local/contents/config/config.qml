@@ -1,7 +1,8 @@
-import org.kde.plasma.core as PlasmaCore
+import QtQuick
+import org.kde.plasma.configuration
 
-PlasmaCore.ConfigModel {
-    PlasmaCore.ConfigCategory {
+ConfigModel {
+    ConfigCategory {
         name: i18n("General")
         icon: "configure"
         source: "config/ConfigGeneral.qml"

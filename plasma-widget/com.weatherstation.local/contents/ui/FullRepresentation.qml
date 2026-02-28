@@ -92,16 +92,15 @@ Item {
                 }
             }
 
-            // Spacer
-            Item { Layout.fillWidth: true }
-
             // Stats grid
             GridLayout {
+                Layout.fillWidth: true
                 Layout.alignment: Qt.AlignTop
-                columns: 2
+                columns: 4
                 rowSpacing: Kirigami.Units.smallSpacing / 2
                 columnSpacing: Kirigami.Units.largeSpacing
 
+                // Row 1
                 PlasmaComponents.Label {
                     text: "Feels like"
                     opacity: 0.55
@@ -111,17 +110,6 @@ Item {
                     text: root.weatherData ? root.formatTemp(root.weatherData.current.feels_like) : "--"
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                 }
-
-                PlasmaComponents.Label {
-                    text: "Humidity"
-                    opacity: 0.55
-                    font.pointSize: Kirigami.Theme.smallFont.pointSize
-                }
-                PlasmaComponents.Label {
-                    text: root.weatherData ? root.weatherData.current.humidity + "%" : "--"
-                    font.pointSize: Kirigami.Theme.smallFont.pointSize
-                }
-
                 PlasmaComponents.Label {
                     text: "Wind"
                     opacity: 0.55
@@ -132,6 +120,16 @@ Item {
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                 }
 
+                // Row 2
+                PlasmaComponents.Label {
+                    text: "Humidity"
+                    opacity: 0.55
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                }
+                PlasmaComponents.Label {
+                    text: root.weatherData ? root.weatherData.current.humidity + "%" : "--"
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                }
                 PlasmaComponents.Label {
                     text: "Pressure"
                     opacity: 0.55
@@ -142,6 +140,7 @@ Item {
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                 }
 
+                // Row 3
                 PlasmaComponents.Label {
                     text: "Dew point"
                     opacity: 0.55
@@ -151,7 +150,6 @@ Item {
                     text: root.weatherData ? root.formatTemp(root.weatherData.current.dew_point) : "--"
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                 }
-
                 PlasmaComponents.Label {
                     text: "Visibility"
                     opacity: 0.55
@@ -181,7 +179,8 @@ Item {
             // Day/Night labels column
             ColumnLayout {
                 Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
+                Layout.fillWidth: false
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                 spacing: 0
 
                 // Day header spacer (aligns with day name row)
@@ -242,7 +241,7 @@ Item {
                                 var d = root.weatherData.daily[index]
                                 if (d.day_detail && d.day_detail.weather && d.day_detail.weather.length > 0)
                                     return root.owmIconToKde(d.day_detail.weather[0].icon)
-                                return root.owmIconToKde(d.weather[0].icon)
+                                return root.owmIconToKde((d.weather && d.weather.length > 0) ? d.weather[0].icon : null)
                             }
                             implicitWidth:  dayIconSize
                             implicitHeight: dayIconSize
@@ -279,7 +278,7 @@ Item {
                                 var d = root.weatherData.daily[index]
                                 if (d.night_detail && d.night_detail.weather && d.night_detail.weather.length > 0)
                                     return root.owmIconToKde(d.night_detail.weather[0].icon)
-                                return root.owmIconToKde(d.weather[0].icon)
+                                return root.owmIconToKde((d.weather && d.weather.length > 0) ? d.weather[0].icon : null)
                             }
                             implicitWidth:  dayIconSize
                             implicitHeight: dayIconSize

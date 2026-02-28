@@ -15,15 +15,17 @@ PlasmoidItem {
     property string errorMsg: ""
 
     // Derived helpers for quick access across representations
-    property string kdeIcon: weatherData
+    property string kdeIcon: (weatherData && weatherData.current
+            && weatherData.current.weather && weatherData.current.weather.length > 0)
         ? owmIconToKde(weatherData.current.weather[0].icon)
         : "weather-none-available"
 
-    property string currentTempStr: weatherData
+    property string currentTempStr: (weatherData && weatherData.current)
         ? formatTemp(weatherData.current.temp)
         : "--"
 
-    property string conditionStr: weatherData
+    property string conditionStr: (weatherData && weatherData.current
+            && weatherData.current.weather && weatherData.current.weather.length > 0)
         ? capitalize(weatherData.current.weather[0].description)
         : (loading ? "Loading…" : "No data")
 
@@ -57,7 +59,10 @@ PlasmoidItem {
         target: Plasmoid.configuration
         function onApiEndpointChanged()    { fetchWeather() }
         function onUnitsChanged()          { fetchWeather() }
-        function onUpdateIntervalChanged() { refreshTimer.restart() }
+        function onUpdateIntervalChanged() {
+            refreshTimer.interval = (Plasmoid.configuration.updateInterval || 5) * 60 * 1000
+            refreshTimer.restart()
+        }
     }
 
     function fetchWeather() {

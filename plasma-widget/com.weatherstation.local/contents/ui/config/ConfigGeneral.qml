@@ -6,7 +6,6 @@ import org.kde.kirigami as Kirigami
 Kirigami.FormLayout {
     id: configPage
 
-    // KDE config binding: cfg_<name> properties are auto-synced with main.xml entries
     property alias cfg_apiEndpoint:    endpointField.text
     property string cfg_units:         "metric"
     property alias cfg_updateInterval: intervalSpin.value
@@ -25,6 +24,9 @@ Kirigami.FormLayout {
         currentIndex: cfg_units === "metric" ? 1 : 0
         onActivated: cfg_units = currentIndex === 1 ? "metric" : "imperial"
     }
+
+    // Keep combo in sync when cfg_units is loaded from saved config
+    onCfg_unitsChanged: unitsCombo.currentIndex = cfg_units === "metric" ? 1 : 0
 
     SpinBox {
         id: intervalSpin
