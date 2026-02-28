@@ -6,7 +6,7 @@ RTL_CSV="/weather-station/app/temperature_data.csv"
 CSV_KEEP_DAYS=7
 
 cleanup() {
-    for pid in "${RTL_PID:-}" "${WRITER_PID:-}" "${HTTP_PID:-}" "${NWS_PID:-}" "${ROTATE_PID:-}"; do
+    for pid in "${RTL_PID:-}" "${WRITER_PID:-}" "${HTTP_PID:-}" "${NWS_PID:-}" "${API_PID:-}" "${ROTATE_PID:-}"; do
         if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
             kill "$pid" 2>/dev/null || true
         fi
@@ -26,6 +26,9 @@ HTTP_PID=$!
 
 python3 /weather-station/fetch_nws.py &
 NWS_PID=$!
+
+python3 /weather-station/weather_api.py &
+API_PID=$!
 
 # Daily CSV rotation at Pacific midnight: sleep until next midnight, rotate,
 # then repeat. Recalculates each iteration so DST transitions stay correct.
@@ -63,6 +66,11 @@ while true; do
         echo "[watchdog] fetch_nws.py exited — restarting" >&2
         python3 /weather-station/fetch_nws.py &
         NWS_PID=$!
+    fi
+    if ! kill -0 "${API_PID}" 2>/dev/null; then
+        echo "[watchdog] weather_api.py exited — restarting" >&2
+        python3 /weather-station/weather_api.py &
+        API_PID=$!
     fi
     sleep 2
 done

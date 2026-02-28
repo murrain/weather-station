@@ -28,5 +28,11 @@ RECENT_COUNT      = 5        # readings shown in tooltip
 
 # ── NWS ───────────────────────────────────────────────────────────
 NWS_URL         = "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
+NWS_DAILY_URL   = "https://api.weather.gov/gridpoints/MTR/113,56/forecast"
 NWS_OBS_STATION = os.environ.get("WEATHER_NWS_OBS", "KCVH")   # nearest ASOS station
 NWS_INTERVAL    = 20 * 60      # seconds between NWS fetches
+
+# ── API server ─────────────────────────────────────────────────────
+API_PORT     = int(os.environ.get("WEATHER_API_PORT", "8002"))
+LOCATION_LAT = 36.8253
+LOCATION_LON = -121.3800

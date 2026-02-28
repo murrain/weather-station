@@ -14,6 +14,7 @@ services:
     image: weather-station:local
     ports:
       - "8001:8000"
+      - "8002:8002"
     restart: unless-stopped
     volumes:
       - /mnt/ssd/apps/weather-station:/weather-station
