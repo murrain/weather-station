@@ -1,9 +1,6 @@
 #!/bin/sh
 
-set -e
-
-echo "Installing runtime dependencies..."
-apk add --no-cache --update tzdata rtl_433 libusb usbutils
+set -eu
 
 echo "Waiting for RTL2838 device (0bda:2838)..."
 

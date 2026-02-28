@@ -3,16 +3,18 @@ services:
     command: /weather-station/startup.sh
     container_name: temperature-monitor
     devices:
-      - /dev/bus/usb/001/007:/dev/bus/usb/001/007
+      - /dev/bus/usb:/dev/bus/usb
     environment:
       - PUID=568
       - PGID=568
-      - USB_DEVICE_PATH=/dev/bus/usb/001/007
+      - USB_DEVICE_PATH=/dev/bus/usb
       - TZ=America/Los_Angeles
-    image: python:3.9-alpine
+    build:
+      context: .
+    image: weather-station:local
     ports:
-      - '8001:8000'
-    privileged: True
+      - "8001:8000"
+    restart: unless-stopped
     volumes:
       - /mnt/ssd/apps/weather-station:/weather-station
       - /etc/localtime:/etc/localtime:ro

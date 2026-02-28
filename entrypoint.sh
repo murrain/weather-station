@@ -1,11 +1,38 @@
 #!/bin/sh
 
-# Start rtl433 in background, outputting to CSV
+set -eu
+
+cleanup() {
+    for pid in "${RTL_PID:-}" "${TAIL_PID:-}" "${HTTP_PID:-}"; do
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
+        fi
+    done
+}
+
+trap cleanup INT TERM EXIT
+
 rtl_433 -F csv:/weather-station/app/temperature_data.csv &
+RTL_PID=$!
 
-# Start the tail script in background
 /weather-station/tail_csv.sh &
+TAIL_PID=$!
 
-# Start Python web server in foreground
-# Start Python web server in foreground
-python3 -m http.server 8000 --directory /weather-station/app --bind 0.0.0.0
+python3 -m http.server 8000 --directory /weather-station/app --bind 0.0.0.0 &
+HTTP_PID=$!
+
+while true; do
+    if ! kill -0 "$RTL_PID" 2>/dev/null; then
+        echo "rtl_433 exited unexpectedly"
+        exit 1
+    fi
+    if ! kill -0 "$TAIL_PID" 2>/dev/null; then
+        echo "tail_csv.sh exited unexpectedly"
+        exit 1
+    fi
+    if ! kill -0 "$HTTP_PID" 2>/dev/null; then
+        echo "http.server exited unexpectedly"
+        exit 1
+    fi
+    sleep 2
+done
