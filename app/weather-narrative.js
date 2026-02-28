@@ -340,8 +340,31 @@
     return String(num).padStart(2, "0");
   }
 
-  function getDayKey(date) {
-    return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  function getZonedParts(date, timeZone) {
+    const dtf = new Intl.DateTimeFormat("en-US", {
+      timeZone: timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hour12: false,
+    });
+    const parts = dtf.formatToParts(date);
+    const map = {};
+    for (const p of parts) {
+      if (p.type !== "literal") map[p.type] = p.value;
+    }
+    return {
+      year: Number(map.year),
+      month: Number(map.month),
+      day: Number(map.day),
+      hour: Number(map.hour),
+    };
+  }
+
+  function getDayKey(date, timeZone) {
+    const zoned = getZonedParts(date, timeZone);
+    return `${zoned.year}-${pad2(zoned.month)}-${pad2(zoned.day)}`;
   }
 
   function hashString(str) {
@@ -499,12 +522,12 @@
     return "open";
   }
 
-  function createPhrase(tempC, humidity, date) {
-    const dayKey = getDayKey(date);
+  function createPhrase(tempC, humidity, date, timeZone) {
+    const dayKey = getDayKey(date, timeZone);
     const theme = getDailyTheme(dayKey);
     const rand = mulberry32(createSeed(dayKey, tempC, humidity));
 
-    const timeBand = getTimeBand(date.getHours());
+    const timeBand = getTimeBand(getZonedParts(date, timeZone).hour);
     const moon = getMoonPhaseName(date);
     const tempBand = getTemperatureBand(tempC);
     const humidityBand = getHumidityBand(humidity);
@@ -597,16 +620,20 @@
     return sentences.join(" ");
   }
 
-  function generate(tempC, humidity, date) {
+  function generate(tempC, humidity, date, options) {
     if (tempC === null || humidity === null) {
       return "Waiting for enough sensor data to describe conditions.";
     }
 
     const now = date || new Date();
-    const dayKey = getDayKey(now);
+    const timeZone =
+      options && options.timeZone
+        ? options.timeZone
+        : Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const dayKey = getDayKey(now, timeZone);
 
     return pickWithoutRecent(dayKey, function () {
-      return createPhrase(tempC, humidity, now);
+      return createPhrase(tempC, humidity, now, timeZone);
     });
   }
 

@@ -661,9 +661,20 @@
                         tempC,
                         humidity,
                         new Date(),
+                        { timeZone: TIMESTAMP_ZONE },
                     );
                 }
                 return "Waiting for enough sensor data to describe conditions.";
+            }
+
+            function getCurrentHourInTimestampZone() {
+                return Number(
+                    new Intl.DateTimeFormat("en-US", {
+                        timeZone: TIMESTAMP_ZONE,
+                        hour: "2-digit",
+                        hour12: false,
+                    }).format(new Date()),
+                );
             }
 
             function getTimeBand(hours) {
@@ -813,7 +824,7 @@
                         humidity,
                         narrativeState.humidityBand,
                     ),
-                    timeBand: getTimeBand(now.getHours()),
+                    timeBand: getTimeBand(getCurrentHourInTimestampZone()),
                     freshness: getFreshnessState(),
                 };
 
