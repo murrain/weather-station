@@ -85,7 +85,7 @@
             /* Primary metrics: temp | divider | humidity */
             .primary-metrics {
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 margin-bottom: 16px;
                 width: 100%;
                 justify-content: center;
@@ -145,9 +145,10 @@
 
             .metric-divider {
                 width: 1px;
-                height: 72px;
+                height: 96px;
                 background: rgba(255, 255, 255, 0.12);
                 flex-shrink: 0;
+                margin-top: 28px;
             }
 
             /* C/F toggle */
