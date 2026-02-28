@@ -23,23 +23,24 @@ BATCH_SIZE     = 5000
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
     id          INTEGER PRIMARY KEY,
+    model       TEXT    NOT NULL,
     channel     INTEGER NOT NULL,
     temp_c      REAL,
     humidity    REAL,
     battery_ok  INTEGER,
-    received_at INTEGER NOT NULL  -- unix timestamp (UTC)
+    received_at INTEGER NOT NULL
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique
-    ON readings (channel, received_at);
+    ON readings (model, channel, received_at);
 
 CREATE INDEX IF NOT EXISTS idx_readings_channel_time
     ON readings (channel, received_at DESC);
 """
 
 INSERT = """
-INSERT OR IGNORE INTO readings (channel, temp_c, humidity, battery_ok, received_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO readings (model, channel, temp_c, humidity, battery_ok, received_at)
+VALUES (?, ?, ?, ?, ?, ?)
 """
 
 
@@ -111,7 +112,8 @@ def migrate(csv_path, db_path):
                 skipped += 1
                 continue
 
-            batch.append((channel, temp_c, humidity, battery_ok, received_at))
+            model = row.get("model", "").strip()
+            batch.append((model, channel, temp_c, humidity, battery_ok, received_at))
 
             if len(batch) >= BATCH_SIZE:
                 before = con.total_changes

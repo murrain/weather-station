@@ -36,6 +36,7 @@ RECENT_COUNT      = 5        # readings shown in tooltip
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
     id          INTEGER PRIMARY KEY,
+    model       TEXT    NOT NULL,
     channel     INTEGER NOT NULL,
     temp_c      REAL,
     humidity    REAL,
@@ -43,14 +44,14 @@ CREATE TABLE IF NOT EXISTS readings (
     received_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_readings_unique
-    ON readings (channel, received_at);
+    ON readings (model, channel, received_at);
 CREATE INDEX IF NOT EXISTS idx_readings_channel_time
     ON readings (channel, received_at DESC);
 """
 
 INSERT = """
-INSERT OR IGNORE INTO readings (channel, temp_c, humidity, battery_ok, received_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO readings (model, channel, temp_c, humidity, battery_ok, received_at)
+VALUES (?, ?, ?, ?, ?, ?)
 """
 
 
@@ -132,7 +133,8 @@ def import_new_rows(con, state):
         reader = csv.DictReader(f, fieldnames=fieldnames)
 
         for row in reader:
-            if row.get("model", "").strip() != SENSOR_MODEL:
+            model = row.get("model", "").strip()
+            if model != SENSOR_MODEL:
                 continue
 
             channel = safe_int(row.get("channel", ""))
@@ -150,7 +152,7 @@ def import_new_rows(con, state):
             if temp_c is None and humidity is None:
                 continue
 
-            batch.append((channel, temp_c, humidity, battery_ok, received_at))
+            batch.append((model, channel, temp_c, humidity, battery_ok, received_at))
 
         new_offset = f.tell()
 
