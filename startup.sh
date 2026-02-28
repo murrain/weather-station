@@ -1,16 +1,22 @@
 #!/bin/sh
-# Install required packages
-apk add --no-cache --update tzdata rtl_433 libusb
 
-# Set timezone
-cp "/usr/share/zoneinfo/${TZ}" /etc/localtime
-echo "${TZ}" > /etc/timezone
+set -e
 
-# Configure RTL-SDR
-echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/blacklist-rtl.conf
+echo "Installing runtime dependencies..."
+apk add --no-cache --update tzdata rtl_433 libusb usbutils
 
-# Make scripts executable
+echo "Waiting for RTL2838 device (0bda:2838)..."
+
+while true; do
+    if lsusb | grep -q "0bda:2838"; then
+        echo "RTL device detected."
+        break
+    fi
+    sleep 2
+done
+
+echo "Making scripts executable..."
 chmod +x /weather-station/entrypoint.sh /weather-station/tail_csv.sh
 
-# Start the application
+echo "Starting weather station..."
 exec /weather-station/entrypoint.sh
