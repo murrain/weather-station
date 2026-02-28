@@ -114,16 +114,18 @@ def migrate(csv_path, db_path):
             batch.append((channel, temp_c, humidity, battery_ok, received_at))
 
             if len(batch) >= BATCH_SIZE:
+                before = con.total_changes
                 con.executemany(INSERT, batch)
                 con.commit()
-                inserted += len(batch)
+                inserted += con.total_changes - before
                 batch.clear()
 
     # Flush remaining
     if batch:
+        before = con.total_changes
         con.executemany(INSERT, batch)
         con.commit()
-        inserted += len(batch)
+        inserted += con.total_changes - before
 
     con.close()
 
