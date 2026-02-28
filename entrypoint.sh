@@ -27,12 +27,14 @@ HTTP_PID=$!
 python3 /weather-station/fetch_nws.py &
 NWS_PID=$!
 
-# Daily CSV rotation: move current CSV to a dated archive, kill rtl_433
-# so the watchdog restarts it writing to a fresh file; purge old archives.
+# Daily CSV rotation at Pacific midnight: sleep until next midnight, rotate,
+# then repeat. Recalculates each iteration so DST transitions stay correct.
 (
     while true; do
-        sleep 86400
-        DATED=$(date +%Y-%m-%d)
+        NOW=$(date +%s)
+        NEXT_MIDNIGHT=$(TZ="America/Los_Angeles" date -d "tomorrow 00:00:00" +%s)
+        sleep $((NEXT_MIDNIGHT - NOW))
+        DATED=$(TZ="America/Los_Angeles" date +%Y-%m-%d)
         mv "${RTL_CSV}" "/weather-station/app/temperature_data_${DATED}.csv" 2>/dev/null || true
         pkill rtl_433 2>/dev/null || true
         find /weather-station/app -name 'temperature_data_*.csv' \
