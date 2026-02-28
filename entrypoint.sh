@@ -3,7 +3,7 @@
 set -eu
 
 cleanup() {
-    for pid in "${RTL_PID:-}" "${TAIL_PID:-}" "${HTTP_PID:-}" "${NWS_PID:-}"; do
+    for pid in "${RTL_PID:-}" "${WRITER_PID:-}" "${HTTP_PID:-}" "${NWS_PID:-}"; do
         if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
             kill "$pid" 2>/dev/null || true
         fi
@@ -15,8 +15,8 @@ trap cleanup INT TERM EXIT
 rtl_433 -F csv:/weather-station/app/temperature_data.csv &
 RTL_PID=$!
 
-/weather-station/tail_csv.sh &
-TAIL_PID=$!
+python3 /weather-station/data_writer.py &
+WRITER_PID=$!
 
 python3 -m http.server 8000 --directory /weather-station/app --bind 0.0.0.0 &
 HTTP_PID=$!
@@ -29,9 +29,10 @@ while true; do
         echo "rtl_433 exited unexpectedly"
         exit 1
     fi
-    if ! kill -0 "$TAIL_PID" 2>/dev/null; then
-        echo "tail_csv.sh exited unexpectedly"
-        exit 1
+    if ! kill -0 "$WRITER_PID" 2>/dev/null; then
+        echo "data_writer.py exited unexpectedly — restarting"
+        python3 /weather-station/data_writer.py &
+        WRITER_PID=$!
     fi
     if ! kill -0 "$HTTP_PID" 2>/dev/null; then
         echo "http.server exited unexpectedly"

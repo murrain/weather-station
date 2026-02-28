@@ -1,1 +1,7 @@
 *.csv
+*.db
+*.db-shm
+*.db-wal
+app/current.json
+app/nws_forecast.json
+app/csv_watcher_state.json

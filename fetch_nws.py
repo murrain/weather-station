@@ -4,7 +4,7 @@ NWS forecast poller for weather-station.
 
 Fetches the current hourly forecast from api.weather.gov every 20 minutes
 and writes a small JSON file that the browser reads as a static asset.
-Runs as a daemon inside the Docker container alongside rtl_433 and tail_csv.sh.
+Runs as a daemon inside the Docker container alongside rtl_433 and data_writer.py.
 """
 
 import json

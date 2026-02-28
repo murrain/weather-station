@@ -1,6 +1,6 @@
 services:
   temperature-monitor:
-    command: /weather-station/startup.sh
+    command: /weather-station/entrypoint.sh
     container_name: temperature-monitor
     devices:
       - /dev/bus/usb:/dev/bus/usb
