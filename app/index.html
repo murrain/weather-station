@@ -736,6 +736,12 @@
 
             function shouldRegenerateNarrative(current, previous, nowMs) {
                 if (!previous.text) return true;
+                if (
+                    current.freshness === "fresh" &&
+                    previous.freshness === "stale"
+                ) {
+                    return true;
+                }
 
                 const ageMs = nowMs - previous.generatedAtMs;
                 if (ageMs >= NARRATIVE_MAX_HOLD_MS) return true;

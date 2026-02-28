@@ -2,6 +2,11 @@
 
 set -eu
 
+if ! command -v rtl_433 >/dev/null 2>&1; then
+    echo "rtl_433 not found in image; installing runtime dependencies..."
+    apk add --no-cache tzdata rtl_433 libusb usbutils
+fi
+
 echo "Waiting for RTL2838 device (0bda:2838)..."
 
 while true; do
