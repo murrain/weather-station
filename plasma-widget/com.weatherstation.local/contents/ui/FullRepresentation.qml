@@ -10,6 +10,12 @@ ColumnLayout {
     Layout.preferredWidth:  Kirigami.Units.gridUnit * 25
     Layout.minimumWidth:    Kirigami.Units.gridUnit * 25
 
+    readonly property bool dbg: Plasmoid.configuration.debugLayout || false
+    readonly property color dbgHeader:   dbg ? "#20ff0000" : "transparent"
+    readonly property color dbgCurrent:  dbg ? "#2000ff00" : "transparent"
+    readonly property color dbgForecast: dbg ? "#200000ff" : "transparent"
+    readonly property color dbgDayCol:   dbg ? "#20ff00ff" : "transparent"
+
     spacing: 0
 
     // ── Empty / error state ────────────────────────────────────────
@@ -25,12 +31,14 @@ ColumnLayout {
     // ── Header: title + last updated ──────────────────────────────
     RowLayout {
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.mediumSpacing
+        Layout.margins: Kirigami.Units.largeSpacing
         Layout.bottomMargin: 0
         visible: root.weatherData !== null
 
-PlasmaComponents.Label {
-            text: "Weather Station"
+        Rectangle { anchors.fill: parent; color: dbgHeader; z: -1 }
+
+        PlasmaComponents.Label {
+            text: root.locationName
             font.weight: Font.Medium
             opacity: 0.55
         }
@@ -47,11 +55,13 @@ PlasmaComponents.Label {
     // ── Current: icon | temp+condition | stats ────────────────
     RowLayout {
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.mediumSpacing
+        Layout.margins: Kirigami.Units.largeSpacing
         spacing: Kirigami.Units.gridUnit
         visible: root.weatherData !== null
 
-// Icon — matches height of the text column
+        Rectangle { anchors.fill: parent; color: dbgCurrent; z: -1 }
+
+        // Icon — matches height of the text column
         Kirigami.Icon {
             source: root.kdeIcon
             implicitWidth:  textColumn.height
@@ -62,7 +72,7 @@ PlasmaComponents.Label {
         // Temp + condition + hi/lo + feels like
         ColumnLayout {
             id: textColumn
-            spacing: 1
+            spacing: Kirigami.Units.smallSpacing
             Layout.alignment: Qt.AlignTop
 
             PlasmaComponents.Label {
@@ -103,7 +113,7 @@ PlasmaComponents.Label {
         GridLayout {
             Layout.alignment: Qt.AlignTop
             columns: 2
-            rowSpacing: 1
+            rowSpacing: Kirigami.Units.smallSpacing
             columnSpacing: Kirigami.Units.largeSpacing
 
             PlasmaComponents.Label { text: "Humidity"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
@@ -126,10 +136,10 @@ PlasmaComponents.Label {
     // ── Divider ───────────────────────────────────────────────
     Rectangle {
         Layout.fillWidth: true
-        Layout.leftMargin: Kirigami.Units.mediumSpacing
-        Layout.rightMargin: Kirigami.Units.mediumSpacing
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        Layout.bottomMargin: Kirigami.Units.smallSpacing
+        Layout.leftMargin: Kirigami.Units.largeSpacing
+        Layout.rightMargin: Kirigami.Units.largeSpacing
+        Layout.topMargin: Kirigami.Units.mediumSpacing
+        Layout.bottomMargin: Kirigami.Units.mediumSpacing
         height: 1
         color: Kirigami.Theme.textColor
         opacity: 0.12
@@ -139,22 +149,28 @@ PlasmaComponents.Label {
     // ── 7-day forecast ────────────────────────────────────────
     RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin: Kirigami.Units.mediumSpacing
-        Layout.rightMargin: Kirigami.Units.mediumSpacing
-        Layout.bottomMargin: Kirigami.Units.mediumSpacing
+        Layout.leftMargin: Kirigami.Units.largeSpacing
+        Layout.rightMargin: Kirigami.Units.largeSpacing
+        Layout.bottomMargin: Kirigami.Units.largeSpacing
         spacing: 0
         visible: root.weatherData !== null
 
-Repeater {
+        Rectangle { anchors.fill: parent; color: dbgForecast; z: -1 }
+
+        Repeater {
             model: root.weatherData
                 ? Math.min(root.weatherData.daily.length, 7)
                 : 0
 
             delegate: ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 0
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+                spacing: 2
 
-// Calendar date
+                Rectangle { anchors.fill: parent; color: dbgDayCol; z: -1 }
+
+                // Calendar date
                 PlasmaComponents.Label {
                     Layout.alignment: Qt.AlignHCenter
                     text: new Date(root.weatherData.daily[index].dt * 1000).getDate()

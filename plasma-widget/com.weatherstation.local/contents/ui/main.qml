@@ -28,6 +28,10 @@ PlasmoidItem {
         ? formatTempPrecise(weatherData.current.temp)
         : "--"
 
+    property string locationName: (weatherData && weatherData.name)
+        ? weatherData.name
+        : "Weather Station"
+
     property string conditionStr: (weatherData && weatherData.current
             && weatherData.current.weather && weatherData.current.weather.length > 0)
         ? capitalize(weatherData.current.weather[0].description)

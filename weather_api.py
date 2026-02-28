@@ -32,6 +32,7 @@ from config import (
     CURRENT_JSON,
     LOCATION_LAT,
     LOCATION_LON,
+    LOCATION_NAME,
     NWS_DAILY_URL,
     NWS_JSON,
 )
@@ -505,6 +506,7 @@ class WeatherHandler(BaseHTTPRequestHandler):
             self.send_json({
                 "lat":             LOCATION_LAT,
                 "lon":             LOCATION_LON,
+                "name":            LOCATION_NAME,
                 "timezone":        "America/Los_Angeles",
                 "timezone_offset": -28800,
                 "current":         build_current_block(units),

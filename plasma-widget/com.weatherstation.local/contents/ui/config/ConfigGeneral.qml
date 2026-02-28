@@ -8,6 +8,7 @@ Kirigami.FormLayout {
 
     property alias cfg_apiEndpoint:    endpointField.text
     property alias cfg_updateInterval: intervalSpin.value
+    property alias cfg_debugLayout:    debugSwitch.checked
 
     TextField {
         id: endpointField
@@ -21,5 +22,10 @@ Kirigami.FormLayout {
         Kirigami.FormData.label: i18n("Refresh interval (minutes):")
         from: 1
         to: 60
+    }
+
+    Switch {
+        id: debugSwitch
+        Kirigami.FormData.label: i18n("Debug layout:")
     }
 }

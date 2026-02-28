@@ -34,5 +34,6 @@ NWS_INTERVAL    = 20 * 60      # seconds between NWS fetches
 
 # ── API server ─────────────────────────────────────────────────────
 API_PORT     = int(os.environ.get("WEATHER_API_PORT", "8002"))
-LOCATION_LAT = 36.8253
-LOCATION_LON = -121.3800
+LOCATION_LAT  = 36.8253
+LOCATION_LON  = -121.3800
+LOCATION_NAME = "Hollister, CA"
