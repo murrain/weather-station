@@ -1,0 +1,431 @@
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #1a2a6c, #3498db, #2ecc71);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    transition: background 1.5s ease;
+    background-attachment: fixed;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 100%;
+    max-width: 720px;
+    background: rgba(0, 0, 0, 0.30);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+/* ── Poem ─────────────────────────────── */
+
+.poem-section {
+    padding: 32px 40px 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+#weather-phrase {
+    font-family: "Tinos", Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.01em;
+}
+
+/* ── Main weather ─────────────────────── */
+
+.weather-section {
+    padding: 44px 40px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Condition icon */
+.condition-icon {
+    font-size: 80px;
+    line-height: 1;
+    margin-bottom: 32px;
+    transition: color 0.8s ease, filter 0.8s ease;
+}
+
+.icon-sun   { color: #ffd60a; filter: drop-shadow(0 0 22px rgba(255, 214, 10, 0.45)); }
+.icon-moon  { color: #dce8ff; filter: drop-shadow(0 0 18px rgba(200, 220, 255, 0.35)); }
+.icon-cloud { color: rgba(255, 255, 255, 0.9); }
+.icon-rain  { color: #7ec8ff; filter: drop-shadow(0 0 18px rgba(100, 180, 255, 0.35)); }
+.icon-snow  { color: #d8eeff; filter: drop-shadow(0 0 18px rgba(180, 220, 255, 0.45)); }
+.icon-storm { color: #c8a8ff; filter: drop-shadow(0 0 22px rgba(180, 140, 255, 0.45)); }
+.icon-fog   { color: rgba(255, 255, 255, 0.60); }
+
+/* Primary metrics: temp | divider | humidity */
+.primary-metrics {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    width: 100%;
+    justify-content: center;
+}
+
+.metric-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 36px;
+}
+
+.metric-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    margin-bottom: 8px;
+}
+
+.metric-value-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.metric-value {
+    font-size: 5.5rem;
+    font-weight: 300;
+    color: white;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.metric-unit {
+    font-size: 1.7rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.55);
+    padding-top: 12px;
+}
+
+/* Trend arrow — rotated by JS */
+.trend-arrow {
+    padding-top: 16px;
+    padding-left: 2px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 1rem;
+    display: inline-block;
+    transition: color 0.6s ease;
+}
+
+.trend-arrow i {
+    display: inline-block;
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metric-divider {
+    width: 1px;
+    height: 96px;
+    background: rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+    margin-top: 28px;
+}
+
+/* C/F toggle */
+.toggle-container {
+    display: flex;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 50px;
+    padding: 3px;
+    margin-top: 14px;
+}
+
+.toggle-btn {
+    padding: 5px 14px;
+    border-radius: 50px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.38);
+    border: none;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: "Inter", sans-serif;
+    transition: all 0.2s ease;
+    letter-spacing: 0.04em;
+}
+
+.toggle-btn.active {
+    background: rgba(255, 255, 255, 0.16);
+    color: white;
+}
+
+/* Feels like */
+.feels-like {
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.42);
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
+}
+
+.feels-like span {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+/* Condition strip */
+.condition-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.condition-item {
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.68);
+    letter-spacing: 0.01em;
+}
+
+.condition-item i {
+    margin-right: 4px;
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.78rem;
+}
+
+.condition-sep {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 0.88rem;
+    font-weight: 300;
+    user-select: none;
+}
+
+/* ── Sensor strip ─────────────────────── */
+
+.sensor-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sensor-card {
+    position: relative;
+    padding: 18px 20px 16px;
+    cursor: default;
+    transition: background 0.18s ease;
+}
+
+.sensor-card + .sensor-card {
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sensor-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.sensor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.sensor-name {
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.sensor-batt-icon {
+    font-size: 0.6rem;
+}
+
+.sensor-reading {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.sensor-temp {
+    font-size: 1rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.sensor-sep {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.18);
+}
+
+.sensor-hum {
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.48);
+}
+
+/* Sensor hover tooltip */
+.sensor-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(8, 8, 18, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 12px;
+    padding: 14px 16px;
+    min-width: 188px;
+    z-index: 20;
+    pointer-events: none;
+    transition: opacity 0.14s ease, visibility 0.14s ease;
+}
+
+.sensor-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: rgba(8, 8, 18, 0.94);
+}
+
+.sensor-card:hover .sensor-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-battery {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.45);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tooltip-battery i {
+    margin-right: 4px;
+}
+
+.tooltip-header {
+    display: grid;
+    grid-template-columns: 46px 1fr 1fr;
+    gap: 4px;
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.28);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tooltip-row {
+    display: grid;
+    grid-template-columns: 46px 1fr 1fr;
+    gap: 4px;
+    font-size: 0.78rem;
+    padding: 2px 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-family: "Inter", monospace;
+}
+
+.tooltip-row .col-temp {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* Status colors — Apple system palette */
+.online  { color: #30d158; }
+.warning { color: #ff9f0a; }
+.offline { color: #ff453a; }
+
+/* ── Footer ───────────────────────────── */
+
+.source-info {
+    padding: 12px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.73rem;
+    color: rgba(255, 255, 255, 0.30);
+    letter-spacing: 0.01em;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.73rem;
+}
+
+.spinner {
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.65);
+    border-radius: 50%;
+    width: 13px;
+    height: 13px;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ───────────────────────── */
+
+@media (max-width: 580px) {
+    body { padding: 14px; }
+
+    .poem-section { padding: 22px 22px 18px; }
+
+    .weather-section { padding: 26px 20px 26px; }
+
+    .condition-icon { font-size: 50px; margin-bottom: 18px; }
+
+    .metric-block { padding: 0 20px; }
+
+    .metric-value { font-size: 4.2rem; }
+
+    .sensor-section { grid-template-columns: 1fr; }
+
+    .sensor-card + .sensor-card {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .sensor-tooltip {
+        left: 16px;
+        right: 16px;
+        transform: none;
+    }
+}
+
+@media (max-width: 390px) {
+    body { padding: 8px; }
+
+    .poem-section { padding: 12px 16px 10px; }
+
+    .weather-section { padding: 14px 16px 18px; }
+
+    .condition-icon { font-size: 32px; margin-bottom: 8px; }
+
+    .metric-block { padding: 0 14px; }
+
+    .metric-value { font-size: 3.8rem; }
+}

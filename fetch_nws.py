@@ -13,9 +13,7 @@ import time
 import urllib.error
 import urllib.request
 
-NWS_URL = (
-    "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
-)
+NWS_URL = "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
 OUTPUT_FILE = "/weather-station/app/nws_forecast.json"
 TMP_FILE = OUTPUT_FILE + ".tmp"
 INTERVAL_SECONDS = 20 * 60  # 20 minutes
