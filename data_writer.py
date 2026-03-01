@@ -24,11 +24,11 @@ from config import (
 TMP_JSON = CURRENT_JSON + ".tmp"
 
 # ── Daily high tracker ────────────────────────────────────────────
-_today_high_c:    float | None = None
-_today_high_date: object       = None  # datetime.date
+_today_high_c    = None  # float | None
+_today_high_date = None  # datetime.date
 
 
-def update_today_high(temp_c: float | None) -> float | None:
+def update_today_high(temp_c):
     """Update and return today's sensor high. Resets automatically at midnight."""
     global _today_high_c, _today_high_date
     today = datetime.now(PACIFIC).date()
