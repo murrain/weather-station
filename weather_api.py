@@ -368,7 +368,9 @@ def build_daily_list(units="metric", sensor=None, nws=None):
         sensor = load_json(CURRENT_JSON)
     pressure = int((nws.get("observations") or {}).get("pressureHpa") or 1013)
     today_str = datetime.now(PACIFIC).strftime("%Y-%m-%d")
-    sensor_temp_c = (sensor.get("aggregate") or {}).get("tempC")
+    agg = sensor.get("aggregate") or {}
+    sensor_temp_c = agg.get("tempC")
+    sensor_humidity = agg.get("humidity")
 
     # Group day/night periods by calendar date
     by_date = defaultdict(dict)
@@ -448,8 +450,8 @@ def build_daily_list(units="metric", sensor=None, nws=None):
                 "morn":  apply_temp(min_c,             units),
             },
             "pressure":   pressure,
-            "humidity":   None,  # NWS daily periods don't include humidity
-            "dew_point":  None,
+            "humidity":   int(round(sensor_humidity)) if date_str == today_str and sensor_humidity is not None else None,
+            "dew_point":  apply_temp(dew_point_c(max_c, sensor_humidity), units) if date_str == today_str and sensor_humidity is not None else None,
             "wind_speed": apply_wind(wind_ms, units),
             "wind_deg":   wind_dir,
             "wind_gust":  None,
