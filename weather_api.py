@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -374,7 +375,7 @@ def build_daily_list(units="metric"):
     nws      = load_json(NWS_JSON)
     sensor   = load_json(CURRENT_JSON)
     pressure = int((nws.get("observations") or {}).get("pressureHpa") or 1013)
-    today_str = datetime.now(PACIFIC).strftime("%Y-%m-%d")
+    today_str = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d")
     sensor_temp_c = (sensor.get("aggregate") or {}).get("tempC")
 
     # Group day/night periods by calendar date
