@@ -109,7 +109,10 @@ def feels_like_c(temp_c, humidity, wind_ms):
 
 
 def wind_dir_deg(direction):
-    return WIND_DEG.get((direction or "").upper().strip(), 0)
+    key = (direction or "").upper().strip()
+    if not key:
+        return None
+    return WIND_DEG.get(key)
 
 
 def sky_to_owm(short_forecast, is_daytime=True):
