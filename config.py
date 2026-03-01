@@ -26,6 +26,20 @@ WINDOW_SECONDS    = 5 * 60  # 5-minute averaging window
 STALE_SECONDS     = WINDOW_SECONDS + 30  # grace period beyond the averaging window
 RECENT_COUNT      = 5        # readings shown in tooltip
 
+# ── NWS helpers ──────────────────────────────────────────────────
+def parse_wind_mph(wind_val):
+    """Parse NWS wind speed to mph. Accepts number or string like '10 to 18 mph'."""
+    if wind_val is None:
+        return 0.0
+    if isinstance(wind_val, (int, float)):
+        return float(wind_val)
+    parts = str(wind_val).lower().replace("mph", "").split("to")
+    try:
+        nums = [float(p.strip()) for p in parts if p.strip()]
+        return sum(nums) / len(nums) if nums else 0.0
+    except ValueError:
+        return 0.0
+
 # ── NWS ───────────────────────────────────────────────────────────
 NWS_URL         = "https://api.weather.gov/gridpoints/MTR/113,56/forecast/hourly"
 NWS_DAILY_URL   = "https://api.weather.gov/gridpoints/MTR/113,56/forecast"

@@ -8,6 +8,8 @@ Kirigami.FormLayout {
 
     property alias cfg_apiEndpoint:    endpointField.text
     property alias cfg_locationName:   locationField.text
+    property alias cfg_tempPrecision:      precisionSpin.value
+    property alias cfg_humidityPrecision:  humidityPrecisionSpin.value
     property alias cfg_updateInterval: intervalSpin.value
     property alias cfg_debugLayout:    debugSwitch.checked
 
@@ -33,6 +35,20 @@ Kirigami.FormLayout {
         placeholderText: i18n("e.g. Hollister, CA")
         Layout.minimumWidth: Kirigami.Units.gridUnit * 22
         visible: locationOverrideSwitch.checked
+    }
+
+    SpinBox {
+        id: precisionSpin
+        Kirigami.FormData.label: i18n("Temperature decimal places:")
+        from: 0
+        to: 2
+    }
+
+    SpinBox {
+        id: humidityPrecisionSpin
+        Kirigami.FormData.label: i18n("Humidity decimal places:")
+        from: 0
+        to: 2
     }
 
     SpinBox {

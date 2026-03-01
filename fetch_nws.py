@@ -13,7 +13,7 @@ import time
 import urllib.error
 import urllib.request
 
-from config import NWS_URL, NWS_OBS_STATION, NWS_JSON, NWS_INTERVAL
+from config import NWS_URL, NWS_OBS_STATION, NWS_JSON, NWS_INTERVAL, parse_wind_mph
 
 TMP_FILE = NWS_JSON + ".tmp"
 OBS_URL  = f"https://api.weather.gov/stations/{NWS_OBS_STATION}/observations/latest"
@@ -26,21 +26,6 @@ HEADERS = {
 # Last successful observation values — preserved across failed fetches.
 _last_obs: dict = {"pressureHpa": None, "visibilityKm": None}
 
-
-def parse_wind_speed_mph(wind_str):
-    """Parse NWS wind speed string to a number.
-
-    Handles: "3 mph", "12 mph", "12 to 18 mph" (returns average).
-    Returns 0 on parse failure.
-    """
-    if not wind_str:
-        return 0
-    parts = wind_str.lower().replace("mph", "").strip().split("to")
-    try:
-        nums = [float(p.strip()) for p in parts if p.strip()]
-        return sum(nums) / len(nums) if nums else 0
-    except ValueError:
-        return 0
 
 
 def fetch_observations():
@@ -100,9 +85,9 @@ def fetch_and_write():
 
     current = periods[0]
     precip         = current.get("probabilityOfPrecipitation") or {}
-    wind_speed_mph = parse_wind_speed_mph(current.get("windSpeed", ""))
+    wind_speed_mph = parse_wind_mph(current.get("windSpeed", ""))
     wind_gust_raw  = current.get("windGust") or ""
-    wind_gust_mph  = parse_wind_speed_mph(wind_gust_raw) if wind_gust_raw else None
+    wind_gust_mph  = parse_wind_mph(wind_gust_raw) if wind_gust_raw else None
 
     fetch_observations()
 

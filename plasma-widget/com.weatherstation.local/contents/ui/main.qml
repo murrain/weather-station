@@ -20,12 +20,14 @@ PlasmoidItem {
         ? owmIconToKde(weatherData.current.weather[0].icon)
         : "weather-none-available"
 
+    // Always rounded to integer for compact system tray display
     property string currentTempStr: (weatherData && weatherData.current)
-        ? formatTemp(weatherData.current.temp)
+        ? Math.round(convertTemp(weatherData.current.temp)) + tempSuffix()
         : "--"
 
-    property string currentTempPrecise: (weatherData && weatherData.current)
-        ? formatTempPrecise(weatherData.current.temp)
+    // Respects configured tempPrecision — used in popup and tooltip
+    property string currentTemp: (weatherData && weatherData.current)
+        ? formatTemp(weatherData.current.temp)
         : "--"
 
     property string locationName: Plasmoid.configuration.locationName
@@ -49,7 +51,7 @@ PlasmoidItem {
     Plasmoid.title: ""
 
     toolTipMainText: conditionStr
-    toolTipSubText:  currentTempPrecise
+    toolTipSubText:  currentTemp
 
     // ── Data fetching ──────────────────────────────────────────────
     Component.onCompleted: fetchWeather()
@@ -144,12 +146,15 @@ PlasmoidItem {
 
     function formatTemp(val) {
         if (val === undefined || val === null) return "--"
-        return Math.round(convertTemp(val)) + tempSuffix()
+        var p = Plasmoid.configuration.tempPrecision
+        return convertTemp(val).toFixed(p !== undefined ? p : 1) + tempSuffix()
     }
 
-    function formatTempPrecise(val) {
+
+    function formatHumidity(val) {
         if (val === undefined || val === null) return "--"
-        return convertTemp(val).toFixed(1) + tempSuffix()
+        var p = Plasmoid.configuration.humidityPrecision
+        return Number(val).toFixed(p !== undefined ? p : 0) + "%"
     }
 
     // Wind: API sends m/s

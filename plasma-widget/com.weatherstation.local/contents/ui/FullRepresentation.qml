@@ -76,7 +76,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignTop
 
             PlasmaComponents.Label {
-                text: root.currentTempPrecise
+                text: root.currentTemp
                 font.pointSize: Kirigami.Theme.defaultFont.pointSize * 3.0
                 font.weight: Font.Light
                 lineHeight: 1
@@ -102,7 +102,7 @@ ColumnLayout {
 
             PlasmaComponents.Label {
                 text: root.weatherData
-                    ? "Feels like " + root.formatTempPrecise(root.weatherData.current.feels_like)
+                    ? "Feels like " + root.formatTemp(root.weatherData.current.feels_like)
                     : ""
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 opacity: 0.55
@@ -117,7 +117,7 @@ ColumnLayout {
             columnSpacing: Kirigami.Units.largeSpacing
 
             PlasmaComponents.Label { text: "Humidity"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
-            PlasmaComponents.Label { text: root.weatherData ? root.weatherData.current.humidity + "%" : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
+            PlasmaComponents.Label { text: root.weatherData ? root.formatHumidity(root.weatherData.current.humidity) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
 
             PlasmaComponents.Label { text: "Wind"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
             PlasmaComponents.Label { text: root.weatherData ? root.formatWind(root.weatherData.current.wind_speed) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
@@ -126,7 +126,7 @@ ColumnLayout {
             PlasmaComponents.Label { text: root.weatherData ? root.formatPressure(root.weatherData.current.pressure) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
 
             PlasmaComponents.Label { text: "Dew point"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
-            PlasmaComponents.Label { text: root.weatherData ? root.formatTempPrecise(root.weatherData.current.dew_point) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
+            PlasmaComponents.Label { text: root.weatherData ? root.formatTemp(root.weatherData.current.dew_point) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }
 
             PlasmaComponents.Label { text: "Visibility"; opacity: 0.55; font.pointSize: Kirigami.Theme.smallFont.pointSize }
             PlasmaComponents.Label { text: root.weatherData ? root.formatVisibility(root.weatherData.current.visibility) : "--"; font.pointSize: Kirigami.Theme.smallFont.pointSize }

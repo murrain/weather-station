@@ -24,7 +24,6 @@ import urllib.error
 import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -36,6 +35,8 @@ from config import (
     LOCATION_NAME,
     NWS_DAILY_URL,
     NWS_JSON,
+    PACIFIC,
+    parse_wind_mph,
 )
 
 HEADERS = {
@@ -100,19 +101,6 @@ def feels_like_c(temp_c, humidity, wind_ms):
 
 
 # ── NWS helpers ───────────────────────────────────────────────────────
-
-def parse_wind_mph(wind_val):
-    """Accept a number or a string like '10 mph' or '10 to 18 mph'."""
-    if wind_val is None:
-        return 0.0
-    if isinstance(wind_val, (int, float)):
-        return float(wind_val)
-    parts = str(wind_val).lower().replace("mph", "").split("to")
-    try:
-        nums = [float(p.strip()) for p in parts if p.strip()]
-        return sum(nums) / len(nums) if nums else 0.0
-    except ValueError:
-        return 0.0
 
 
 def wind_dir_deg(direction):
@@ -321,10 +309,12 @@ def fetch_daily_periods():
 
 # ── Response builders ─────────────────────────────────────────────────
 
-def build_current_block(units="metric"):
+def build_current_block(units="metric", sensor=None, nws=None):
     """Build an OWM-style current-conditions object using local sensors + NWS."""
-    sensor = load_json(CURRENT_JSON)
-    nws    = load_json(NWS_JSON)
+    if sensor is None:
+        sensor = load_json(CURRENT_JSON)
+    if nws is None:
+        nws = load_json(NWS_JSON)
 
     agg      = sensor.get("aggregate", {})
     c        = nws.get("current", {})
@@ -359,7 +349,7 @@ def build_current_block(units="metric"):
         "pressure":   pressure,
         "humidity":   int(round(humidity)),
         "dew_point":  apply_temp(dp_c,   units),
-        "uvi":        0,
+        "uvi":        None,  # not available from NWS
         "clouds":     clouds_pct(short),
         "visibility": int(vis_km * 1000),
         "wind_speed": apply_wind(wind_ms, units),
@@ -369,13 +359,15 @@ def build_current_block(units="metric"):
     }
 
 
-def build_daily_list(units="metric"):
+def build_daily_list(units="metric", sensor=None, nws=None):
     """Build a 7-entry OWM-style daily forecast list from NWS daily periods."""
     periods  = fetch_daily_periods()
-    nws      = load_json(NWS_JSON)
-    sensor   = load_json(CURRENT_JSON)
+    if nws is None:
+        nws = load_json(NWS_JSON)
+    if sensor is None:
+        sensor = load_json(CURRENT_JSON)
     pressure = int((nws.get("observations") or {}).get("pressureHpa") or 1013)
-    today_str = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d")
+    today_str = datetime.now(PACIFIC).strftime("%Y-%m-%d")
     sensor_temp_c = (sensor.get("aggregate") or {}).get("tempC")
 
     # Group day/night periods by calendar date
@@ -414,10 +406,13 @@ def build_daily_list(units="metric"):
 
         # Timestamp: noon on that calendar day (offset-aware → UTC epoch)
         try:
-            start_iso = anchor.get("startTime", date_str + "T12:00:00-08:00")
-            dt_start  = datetime.fromisoformat(start_iso)
-            dt_noon   = dt_start.replace(hour=12, minute=0, second=0, microsecond=0)
-            dt_ts     = int(dt_noon.timestamp())
+            start_iso = anchor.get("startTime")
+            if start_iso:
+                dt_start = datetime.fromisoformat(start_iso)
+            else:
+                dt_start = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=PACIFIC)
+            dt_noon = dt_start.replace(hour=12, minute=0, second=0, microsecond=0)
+            dt_ts   = int(dt_noon.timestamp())
         except Exception:
             dt_ts = int(time.time())
 
@@ -452,22 +447,16 @@ def build_daily_list(units="metric"):
                 "eve":   apply_temp(max_c,             units),
                 "morn":  apply_temp(min_c,             units),
             },
-            "feels_like": {
-                "day":   apply_temp(day_c or max_c,   units),
-                "night": apply_temp(night_c or min_c,  units),
-                "eve":   apply_temp(max_c,             units),
-                "morn":  apply_temp(min_c,             units),
-            },
             "pressure":   pressure,
-            "humidity":   50,
-            "dew_point":  apply_temp(dew_point_c(max_c, 50), units),
+            "humidity":   None,  # NWS daily periods don't include humidity
+            "dew_point":  None,
             "wind_speed": apply_wind(wind_ms, units),
             "wind_deg":   wind_dir,
             "wind_gust":  None,
             "weather":    [sky_to_owm(short, True)],
             "clouds":     clouds_pct(short),
             "pop":        pop,
-            "uvi":        0,
+            "uvi":        None,  # not available from NWS
             "day_detail": {
                 "weather":    [sky_to_owm(day_short, True)],
                 "pop":        day_pop / 100.0,
@@ -510,19 +499,24 @@ class WeatherHandler(BaseHTTPRequestHandler):
             units = "metric"
         path = parsed.path.rstrip("/")
 
+        # Load data files once per request
+        sensor = load_json(CURRENT_JSON)
+        nws    = load_json(NWS_JSON)
+        tz_offset = int(datetime.now(PACIFIC).utcoffset().total_seconds())
+
         if path in ("/data/3.0/onecall", "/data/2.5/onecall"):
             self.send_json({
                 "lat":             LOCATION_LAT,
                 "lon":             LOCATION_LON,
                 "name":            LOCATION_NAME,
                 "timezone":        "America/Los_Angeles",
-                "timezone_offset": -28800,
-                "current":         build_current_block(units),
-                "daily":           build_daily_list(units),
+                "timezone_offset": tz_offset,
+                "current":         build_current_block(units, sensor, nws),
+                "daily":           build_daily_list(units, sensor, nws),
             })
 
         elif path == "/data/2.5/weather":
-            cur = build_current_block(units)
+            cur = build_current_block(units, sensor, nws)
             self.send_json({
                 "coord":      {"lon": LOCATION_LON, "lat": LOCATION_LAT},
                 "weather":    cur["weather"],
@@ -536,16 +530,14 @@ class WeatherHandler(BaseHTTPRequestHandler):
                 "wind":       {"speed": cur["wind_speed"], "deg": cur["wind_deg"]},
                 "clouds":     {"all": cur["clouds"]},
                 "dt":         cur["dt"],
-                "timezone":   -28800,
+                "timezone":   tz_offset,
                 "name":       "Hollister",
                 "cod":        200,
             })
 
         elif path == "/api/v1/current":
-            sensor = load_json(CURRENT_JSON)
-            nws    = load_json(NWS_JSON)
             self.send_json({
-                "current":      build_current_block("metric"),
+                "current":      build_current_block("metric", sensor, nws),
                 "channels":     sensor.get("channels"),
                 "nws":          nws.get("current"),
                 "observations": nws.get("observations"),
@@ -553,7 +545,7 @@ class WeatherHandler(BaseHTTPRequestHandler):
             })
 
         elif path == "/api/v1/forecast":
-            self.send_json({"daily": build_daily_list(units)})
+            self.send_json({"daily": build_daily_list(units, sensor, nws)})
 
         else:
             self.send_json({"error": "Not found"}, 404)
