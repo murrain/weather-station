@@ -47,6 +47,11 @@ HEADERS = {
 DAILY_CACHE_TTL = 20 * 60  # seconds
 _daily_cache: dict = {"fetchedAt": 0, "periods": []}
 
+# Cache today's daytime shortForecast so the icon stays accurate after the
+# NWS daytime period expires in the evening.
+_today_day_short      = None  # str | None
+_today_day_short_date = None  # datetime.date
+
 WIND_DEG = {
     "N": 0,   "NNE": 22,  "NE": 45,  "ENE": 67,
     "E": 90,  "ESE": 112, "SE": 135, "SSE": 157,
@@ -361,6 +366,7 @@ def build_current_block(units="metric", sensor=None, nws=None):
 
 def build_daily_list(units="metric", sensor=None, nws=None):
     """Build a 7-entry OWM-style daily forecast list from NWS daily periods."""
+    global _today_day_short, _today_day_short_date
     periods  = fetch_daily_periods()
     if nws is None:
         nws = load_json(NWS_JSON)
@@ -409,6 +415,9 @@ def build_daily_list(units="metric", sensor=None, nws=None):
         pop = max(day_pop, night_pop) / 100.0
 
         short = anchor.get("shortForecast", "")
+        # For today, prefer the cached daytime condition for the summary icon
+        if date_str == today_str and _today_day_short_date == datetime.now(PACIFIC).date() and _today_day_short:
+            short = _today_day_short
 
         # Timestamp: noon on that calendar day (offset-aware → UTC epoch)
         try:
@@ -433,6 +442,16 @@ def build_daily_list(units="metric", sensor=None, nws=None):
 
         day_short   = day_p.get("shortForecast", "")   if day_p   else short
         night_short = night_p.get("shortForecast", "") if night_p else short
+
+        # Keep today's daytime sky condition cached so the icon stays correct
+        # after the NWS daytime period expires in the evening.
+        if date_str == today_str:
+            today = datetime.now(PACIFIC).date()
+            if day_p:
+                _today_day_short      = day_short
+                _today_day_short_date = today
+            if _today_day_short_date == today and _today_day_short:
+                day_short = _today_day_short
 
         day_wind_ms   = parse_wind_mph(day_p.get("windSpeed", ""))   * 0.44704 if day_p   else wind_ms
         night_wind_ms = parse_wind_mph(night_p.get("windSpeed", "")) * 0.44704 if night_p else wind_ms
