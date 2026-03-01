@@ -3,13 +3,13 @@
     "KPlugin": {
         "Id": "com.weatherstation.local",
         "Name": "Weather Station",
-        "Description": "Local weather station — current conditions and 7-day forecast from a configurable OpenWeatherMap-compatible API endpoint.",
+        "Description": "A wire listens to the wind,\na sensor hums its quiet hymn—\ntemperature, humidity, rain.\nThe porch thermometer speaks again.\n\nFrom radio waves to pixel light,\nit charts the day, it maps the night.\nNo cloud API, no distant server—\njust a backyard weather observer.",
         "Icon": "weather-clear",
         "Category": "Weather",
         "License": "MIT",
         "Authors": [
             {
-                "Name": "weather-station"
+                "Name": "Patrick Smith"
             }
         ]
     },
