@@ -13,7 +13,9 @@ import time
 import urllib.error
 import urllib.request
 
-from config import NWS_URL, NWS_OBS_STATION, NWS_JSON, NWS_INTERVAL, parse_wind_mph
+from datetime import datetime
+
+from config import NWS_URL, NWS_OBS_STATION, NWS_JSON, NWS_INTERVAL, PACIFIC, parse_wind_mph
 
 TMP_FILE = NWS_JSON + ".tmp"
 OBS_URL  = f"https://api.weather.gov/stations/{NWS_OBS_STATION}/observations/latest"
@@ -89,10 +91,26 @@ def fetch_and_write():
     wind_gust_raw  = current.get("windGust") or ""
     wind_gust_mph  = parse_wind_mph(wind_gust_raw) if wind_gust_raw else None
 
+    # Find today's peak-daytime shortForecast (10am–3pm Pacific) for icon persistence.
+    today_str = datetime.now(PACIFIC).strftime("%Y-%m-%d")
+    today_day_short = None
+    for p in periods:
+        start = p.get("startTime", "")
+        if not start.startswith(today_str):
+            continue
+        try:
+            hour = datetime.fromisoformat(start).hour
+        except Exception:
+            continue
+        if 10 <= hour <= 15:
+            today_day_short = p.get("shortForecast")
+            break
+
     fetch_observations()
 
     payload = {
         "fetchedAt": time.time(),
+        "todayDayShort": today_day_short,
         "current": {
             "windSpeedMph":              wind_speed_mph,
             "windGustMph":               wind_gust_mph,

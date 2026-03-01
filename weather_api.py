@@ -415,9 +415,17 @@ def build_daily_list(units="metric", sensor=None, nws=None):
         pop = max(day_pop, night_pop) / 100.0
 
         short = anchor.get("shortForecast", "")
-        # For today, prefer the cached daytime condition for the summary icon
-        if date_str == today_str and _today_day_short_date == datetime.now(PACIFIC).date() and _today_day_short:
-            short = _today_day_short
+        # For today, prefer the cached daytime condition for the summary icon.
+        # Seed the cache from nws_forecast.json if not yet populated (e.g. after restart).
+        if date_str == today_str:
+            today = datetime.now(PACIFIC).date()
+            if _today_day_short_date != today:
+                persisted = nws.get("todayDayShort")
+                if persisted:
+                    _today_day_short      = persisted
+                    _today_day_short_date = today
+            if _today_day_short_date == today and _today_day_short:
+                short = _today_day_short
 
         # Timestamp: noon on that calendar day (offset-aware → UTC epoch)
         try:
@@ -452,6 +460,8 @@ def build_daily_list(units="metric", sensor=None, nws=None):
                 _today_day_short_date = today
             if _today_day_short_date == today and _today_day_short:
                 day_short = _today_day_short
+            elif nws.get("todayDayShort"):
+                day_short = nws["todayDayShort"]
 
         day_wind_ms   = parse_wind_mph(day_p.get("windSpeed", ""))   * 0.44704 if day_p   else wind_ms
         night_wind_ms = parse_wind_mph(night_p.get("windSpeed", "")) * 0.44704 if night_p else wind_ms
