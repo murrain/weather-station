@@ -418,10 +418,11 @@ function updateSensorStatus() {
         const ch = currentChannels ? currentChannels[String(chId)] : null;
 
         const isOnline  = ch ? ch.online : false;
-        const isBattLow = isOnline && ch.batteryOk === false;
+        // battery_ok in the raw data is the battery_low bit (0=ok, 1=low)
+        const isBattLow = isOnline && ch.batteryOk === true;
         const statusClass = isOnline ? (isBattLow ? "warning" : "online") : "offline";
-        const battLabel = ch?.batteryOk === true  ? "Battery OK"
-                        : ch?.batteryOk === false ? "Battery LOW"
+        const battLabel = ch?.batteryOk === false ? "Battery OK"
+                        : ch?.batteryOk === true  ? "Battery LOW"
                         : "Battery unknown";
 
         const battEl = document.getElementById(`sensor-batt-${chId}`);
