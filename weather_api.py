@@ -372,7 +372,10 @@ def build_daily_list(units="metric"):
     """Build a 7-entry OWM-style daily forecast list from NWS daily periods."""
     periods  = fetch_daily_periods()
     nws      = load_json(NWS_JSON)
+    sensor   = load_json(CURRENT_JSON)
     pressure = int((nws.get("observations") or {}).get("pressureHpa") or 1013)
+    today_str = datetime.now(PACIFIC).strftime("%Y-%m-%d")
+    sensor_temp_c = (sensor.get("aggregate") or {}).get("tempC")
 
     # Group day/night periods by calendar date
     by_date = defaultdict(dict)
@@ -392,6 +395,10 @@ def build_daily_list(units="metric"):
         day_c   = f_to_c(day_p["temperature"])   if day_p   else None
         night_c = f_to_c(night_p["temperature"]) if night_p else None
         temps   = [t for t in (day_c, night_c) if t is not None]
+        # For today, include the current sensor reading so the daytime high
+        # isn't lost once the NWS daytime forecast period expires in the evening.
+        if date_str == today_str and sensor_temp_c is not None:
+            temps.append(sensor_temp_c)
         max_c   = max(temps) if temps else 20.0
         min_c   = min(temps) if temps else 10.0
 
