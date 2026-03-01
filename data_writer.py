@@ -23,6 +23,22 @@ from config import (
 
 TMP_JSON = CURRENT_JSON + ".tmp"
 
+# ── Daily high tracker ────────────────────────────────────────────
+_today_high_c:    float | None = None
+_today_high_date: object       = None  # datetime.date
+
+
+def update_today_high(temp_c: float | None) -> float | None:
+    """Update and return today's sensor high. Resets automatically at midnight."""
+    global _today_high_c, _today_high_date
+    today = datetime.now(PACIFIC).date()
+    if _today_high_date != today:
+        _today_high_c    = temp_c
+        _today_high_date = today
+    elif temp_c is not None and (_today_high_c is None or temp_c > _today_high_c):
+        _today_high_c = temp_c
+    return _today_high_c
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
     id          INTEGER PRIMARY KEY,
@@ -159,6 +175,9 @@ def import_new_rows(con, state):
             if temp_c is None and humidity is None:
                 continue
 
+            if temp_c is not None:
+                update_today_high(temp_c)
+
             batch.append((model, sensor_id, channel, temp_c, humidity, battery_ok, received_at))
 
     if batch:
@@ -237,14 +256,16 @@ def generate_current(con):
     agg_temps = [v["tempC"]    for v in online_ch if v["tempC"]    is not None]
     agg_hums  = [v["humidity"] for v in online_ch if v["humidity"] is not None]
 
-    trend = round(sum(channel_trends) / len(channel_trends), 4) if channel_trends else None
+    trend    = round(sum(channel_trends) / len(channel_trends), 4) if channel_trends else None
+    agg_temp = round(sum(agg_temps) / len(agg_temps), 2) if agg_temps else None
 
     payload = {
         "generatedAt": now,
         "channels":    channels,
         "aggregate": {
-            "tempC":            round(sum(agg_temps) / len(agg_temps), 2) if agg_temps else None,
-            "humidity":         round(sum(agg_hums)  / len(agg_hums),  2) if agg_hums  else None,
+            "tempC":            agg_temp,
+            "todayHighC":       round(_today_high_c, 2) if _today_high_c is not None else None,
+            "humidity":         round(sum(agg_hums) / len(agg_hums), 2) if agg_hums else None,
             "tempTrendCPerMin": trend,
         },
     }

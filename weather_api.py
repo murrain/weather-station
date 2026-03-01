@@ -369,8 +369,9 @@ def build_daily_list(units="metric", sensor=None, nws=None):
     pressure = int((nws.get("observations") or {}).get("pressureHpa") or 1013)
     today_str = datetime.now(PACIFIC).strftime("%Y-%m-%d")
     agg = sensor.get("aggregate") or {}
-    sensor_temp_c = agg.get("tempC")
+    sensor_temp_c   = agg.get("tempC")
     sensor_humidity = agg.get("humidity")
+    today_high_c    = agg.get("todayHighC")  # maintained by data_writer.py
 
     # Group day/night periods by calendar date
     by_date = defaultdict(dict)
@@ -390,10 +391,13 @@ def build_daily_list(units="metric", sensor=None, nws=None):
         day_c   = f_to_c(day_p["temperature"])   if day_p   else None
         night_c = f_to_c(night_p["temperature"]) if night_p else None
         temps   = [t for t in (day_c, night_c) if t is not None]
-        # For today, include the current sensor reading so the daytime high
-        # isn't lost once the NWS daytime forecast period expires in the evening.
-        if date_str == today_str and sensor_temp_c is not None:
-            temps.append(sensor_temp_c)
+        # For today, use today's observed SQLite max so the high reflects the
+        # actual peak, not just the current reading.
+        if date_str == today_str:
+            if today_high_c is not None:
+                temps.append(today_high_c)
+            elif sensor_temp_c is not None:
+                temps.append(sensor_temp_c)
         max_c   = max(temps) if temps else 20.0
         min_c   = min(temps) if temps else 10.0
 
