@@ -277,12 +277,26 @@ def generate_current(con):
 
 # ── Main loop ─────────────────────────────────────────────────────
 
+def seed_today_high(con):
+    """On boot, scan today's readings for the actual daily high."""
+    today = datetime.now(PACIFIC).date()
+    midnight = datetime(today.year, today.month, today.day, tzinfo=PACIFIC).timestamp()
+    row = con.execute(
+        "SELECT MAX(temp_c) FROM readings WHERE received_at >= ? AND channel IN (0,1,2)",
+        (midnight,),
+    ).fetchone()
+    if row and row[0] is not None:
+        update_today_high(row[0])
+        print(f"[data_writer] Today's high from DB: {row[0]:.1f}°C", flush=True)
+
+
 def main():
     con = sqlite3.connect(DB_PATH)
     con.execute("PRAGMA journal_mode=WAL")
     con.executescript(SCHEMA)
     con.commit()
 
+    seed_today_high(con)
     state          = load_state()
     last_generated = 0.0
 
