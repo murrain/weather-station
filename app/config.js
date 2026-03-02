@@ -6,6 +6,7 @@
       updateIntervalMs: 10000,
       timestampZone: "America/Los_Angeles",
       timezoneLabel: "PST",
+      use24HourTime: true,
     },
     narrative: {
       minHoldMs: 5 * 60 * 1000,

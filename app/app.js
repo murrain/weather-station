@@ -8,6 +8,7 @@ const NWS_CONFIG_OBJ   = APP_CONFIG.nws       || {};
 
 const UPDATE_INTERVAL          = DATA_CONFIG.updateIntervalMs              || 10000;
 const TIMESTAMP_ZONE           = DATA_CONFIG.timestampZone                 || "America/Los_Angeles";
+const USE_24_HOUR_TIME         = DATA_CONFIG.use24HourTime                 ?? false;
 const TIMEZONE_LABEL           = new Intl.DateTimeFormat("en-US", {
     timeZone: TIMESTAMP_ZONE, timeZoneName: "short",
 }).formatToParts(new Date()).find(p => p.type === "timeZoneName")?.value ?? "PST";
@@ -449,7 +450,7 @@ function updateSensorStatus() {
                     `<div class="tooltip-header"><span>Time</span><span>Temp</span><span>Humid</span></div>`,
                     ...readings.map(r => {
                         const t  = new Date(r.time * 1000).toLocaleTimeString([], {
-                            hour: "2-digit", minute: "2-digit", timeZone: TIMESTAMP_ZONE,
+                            hour: "2-digit", minute: "2-digit", hour12: !USE_24_HOUR_TIME, timeZone: TIMESTAMP_ZONE,
                         });
                         const tv = r.tempC    != null ? `${convertTemp(r.tempC)}${unit}` : "--";
                         const hv = r.humidity != null ? `${r.humidity.toFixed(1)}%`      : "--";
@@ -579,7 +580,7 @@ function processCurrentJSON(data) {
     const generatedAtMs = (data.generatedAt || 0) * 1000;
     updateTime.textContent = generatedAtMs
         ? new Date(generatedAtMs).toLocaleTimeString([], {
-              hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: TIMESTAMP_ZONE,
+              hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: !USE_24_HOUR_TIME, timeZone: TIMESTAMP_ZONE,
           })
         : "--";
 
