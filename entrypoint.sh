@@ -52,6 +52,17 @@ while true; do
         echo "[watchdog] rtl_433 exited — restarting" >&2
         rtl_433 -F "csv:${RTL_CSV}" &
         RTL_PID=$!
+    elif [ -f "${RTL_CSV}" ]; then
+        LAST_WRITE=$(stat -c %Y "${RTL_CSV}" 2>/dev/null || echo 0)
+        NOW=$(date +%s)
+        AGE=$((NOW - LAST_WRITE))
+        if [ "$AGE" -gt 300 ]; then
+            echo "[watchdog] rtl_433 stalled (no CSV data for ${AGE}s) — restarting" >&2
+            kill "${RTL_PID}" 2>/dev/null || true
+            sleep 1
+            rtl_433 -F "csv:${RTL_CSV}" &
+            RTL_PID=$!
+        fi
     fi
     if ! kill -0 "${WRITER_PID}" 2>/dev/null; then
         echo "[watchdog] data_writer.py exited — restarting" >&2

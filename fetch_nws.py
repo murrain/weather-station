@@ -57,9 +57,20 @@ def fetch_observations():
     vis = props.get("visibility") or {}
     visibility_km = round(vis["value"] / 1000, 1) if vis.get("value") is not None else None
 
-    _last_obs = {"pressureHpa": pressure_hpa, "visibilityKm": visibility_km}
+    temp = props.get("temperature") or {}
+    temp_c = round(temp["value"], 1) if temp.get("value") is not None else None
+
+    rh = props.get("relativeHumidity") or {}
+    humidity = round(rh["value"], 1) if rh.get("value") is not None else None
+
+    _last_obs = {
+        "pressureHpa":  pressure_hpa,
+        "visibilityKm": visibility_km,
+        "tempC":        temp_c,
+        "humidity":     humidity,
+    }
     print(
-        f"[nws] Obs: {pressure_hpa} hPa | vis {visibility_km} km ({NWS_OBS_STATION})",
+        f"[nws] Obs: {temp_c}°C | {humidity}% RH | {pressure_hpa} hPa | vis {visibility_km} km ({NWS_OBS_STATION})",
         flush=True,
     )
 

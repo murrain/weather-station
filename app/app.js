@@ -21,13 +21,15 @@ const NARRATIVE_HUM_HYS_PCT    = NARRATIVE_CONFIG.humidityBandHysteresisPct || 2
 const NWS_FETCH_INTERVAL_MS    = NWS_CONFIG_OBJ.fetchIntervalMs            || 5  * 60 * 1000;
 const NWS_DATA_FILE            = NWS_CONFIG_OBJ.dataFile                   || "nws_forecast.json";
 const NWS_STALE_AFTER_MS       = NWS_CONFIG_OBJ.staleAfterMs               || 90 * 60 * 1000;
+const SENSOR_FALLBACK_MS       = DATA_CONFIG.sensorFallbackMs               || 90 * 60 * 1000;
 const NARRATIVE_STORAGE_KEY    = "weatherStationNarrativeStateV2";
 
 // ── State ──────────────────────────────────────────────────────────
-let currentTempC    = null;
-let avgHumidity     = null;
-let currentChannels = null;   // per-channel data from current.json
-let nwsData         = null;
+let currentTempC      = null;
+let avgHumidity       = null;
+let currentChannels   = null;   // per-channel data from current.json
+let nwsData           = null;
+let usingNwsFallback  = false;
 
 let narrativeState = {
     text: null, generatedAtMs: 0,
@@ -157,8 +159,41 @@ function getStableHumidityBand(humidity, previousBand) {
 }
 
 function getFreshnessState() {
-    if (!currentChannels) return "stale";
-    return Object.values(currentChannels).some(ch => ch.online) ? "fresh" : "stale";
+    if (!currentChannels) return usingNwsFallback ? "nws-fallback" : "stale";
+    if (Object.values(currentChannels).some(ch => ch.online)) return "fresh";
+    return usingNwsFallback ? "nws-fallback" : "stale";
+}
+
+function getSensorLastSeenMs() {
+    if (!currentChannels) return null;
+    let maxLastSeen = null;
+    for (const ch of Object.values(currentChannels)) {
+        if (ch.lastSeen != null) {
+            const ms = ch.lastSeen * 1000;
+            if (maxLastSeen === null || ms > maxLastSeen) maxLastSeen = ms;
+        }
+    }
+    return maxLastSeen;
+}
+
+// Returns true if the fallback state changed (so callers know to redraw).
+function checkNwsFallback() {
+    const lastSeenMs = getSensorLastSeenMs();
+    const sensorAge  = lastSeenMs !== null ? Date.now() - lastSeenMs : Infinity;
+    const hasNwsObs  = nwsData?.obsTempC != null;
+
+    const was        = usingNwsFallback;
+    usingNwsFallback = sensorAge >= SENSOR_FALLBACK_MS && hasNwsObs;
+
+    if (usingNwsFallback) {
+        currentTempC = nwsData.obsTempC;
+        avgHumidity  = nwsData.obsHumidity ?? null;
+    }
+
+    const noticeEl = document.getElementById("nws-fallback-notice");
+    if (noticeEl) noticeEl.style.display = usingNwsFallback ? "" : "none";
+
+    return was !== usingNwsFallback;
 }
 
 // ── Trend arrow ────────────────────────────────────────────────────
@@ -314,7 +349,7 @@ function updateWeatherNarrative(tempC, humidity) {
     if (shouldRegenerateNarrative(current, narrativeState, nowMs)) {
         const text = current.freshness === "stale"
             ? "Step outside and the air feels uncertain, like a paused conversation. The latest signals are old enough that the moment may have shifted. The weather is still listening, and we are listening with it."
-            : getWeatherPhrase(tempC, humidity);
+            : getWeatherPhrase(tempC, humidity);  // covers both "fresh" and "nws-fallback"
         narrativeState = { ...current, text, generatedAtMs: nowMs };
         saveNarrativeStateToStorage();
     }
@@ -554,13 +589,29 @@ function fetchNWSData() {
                 isDaytime:     c.isDaytime !== false,
                 pressureHpa:   json.observations?.pressureHpa  ?? null,
                 visibilityKm:  json.observations?.visibilityKm ?? null,
+                obsTempC:      json.observations?.tempC        ?? null,
+                obsHumidity:   json.observations?.humidity     ?? null,
             };
 
-            updateWeatherIcon();
-            updateFeelsLike();
-            updateAdvancedStats();
+            // If sensors are already stale, the newly-arrived obs data may
+            // flip us into fallback mode — redraw the whole display if so.
+            const fallbackChanged = checkNwsFallback();
+            if (fallbackChanged) {
+                tempValue.textContent     = currentTempC !== null ? convertTemp(currentTempC) : "--";
+                humidityValue.textContent = avgHumidity  !== null ? avgHumidity.toFixed(1)    : "--";
+                setTemperatureBackground(currentTempC);
+                updateSensorStatus();
+                updateFeelsLike();
+                updateAdvancedStats();
+            }
 
-            if (windBand !== prevWindBand || skyCondition !== prevSky) {
+            updateWeatherIcon();
+            if (!fallbackChanged) {
+                updateFeelsLike();
+                updateAdvancedStats();
+            }
+
+            if (fallbackChanged || windBand !== prevWindBand || skyCondition !== prevSky) {
                 updateWeatherNarrative(currentTempC, avgHumidity);
             }
         })
@@ -573,6 +624,8 @@ function processCurrentJSON(data) {
     currentTempC    = agg.tempC    ?? null;
     avgHumidity     = agg.humidity ?? null;
     currentChannels = data.channels || null;
+
+    checkNwsFallback();  // may override currentTempC/avgHumidity with NWS obs
 
     tempValue.textContent     = currentTempC  !== null ? convertTemp(currentTempC)      : "--";
     humidityValue.textContent = avgHumidity   !== null ? avgHumidity.toFixed(1)         : "--";

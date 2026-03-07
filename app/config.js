@@ -7,6 +7,7 @@
       timestampZone: "America/Los_Angeles",
       timezoneLabel: "PST",
       use24HourTime: true,
+      sensorFallbackMs: 30 * 60 * 1000,  // use NWS obs after 30 min without local data
     },
     narrative: {
       minHoldMs: 5 * 60 * 1000,
