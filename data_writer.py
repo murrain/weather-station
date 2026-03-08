@@ -183,6 +183,15 @@ def import_new_rows(con, state):
     if batch:
         con.executemany(INSERT, batch)
         con.commit()
+        for ch in sorted({row[2] for row in batch}):
+            ch_rows = [r for r in batch if r[2] == ch]
+            # Use the most recent row for display
+            _, _, _, temp_c, humidity, battery_ok, _ = ch_rows[-1]
+            name     = CHANNEL_NAMES.get(ch, f"ch{ch}")
+            temp_s   = f"{temp_c:.1f}°C"   if temp_c   is not None else "—"
+            hum_s    = f"{humidity:.0f}%"   if humidity  is not None else "—"
+            batt_s   = "" if battery_ok else " [LOW BATT]"
+            print(f"[data_writer] rx ch{ch} {name}: {temp_s} {hum_s}{batt_s}", flush=True)
 
     state["offset"] = new_offset
     state["inode"]  = current_inode
@@ -191,7 +200,7 @@ def import_new_rows(con, state):
 
 # ── current.json generation ───────────────────────────────────────
 
-def generate_current(con):
+def generate_current(con, verbose=True):
     now          = int(time.time())
     window_start = now - WINDOW_SECONDS
     stale_cutoff = now - STALE_SECONDS
@@ -274,6 +283,17 @@ def generate_current(con):
         json.dump(payload, f)
     os.replace(TMP_JSON, CURRENT_JSON)
 
+    agg     = payload["aggregate"]
+    offline = [v["name"] for v in payload["channels"].values() if not v["online"]]
+    if offline:
+        print(f"[data_writer] OFFLINE: {', '.join(offline)}", flush=True)
+    if verbose:
+        temp_str  = f"{agg['tempC']:.1f}°C" if agg["tempC"] is not None else "no temp"
+        hum_str   = f"{agg['humidity']:.0f}%" if agg["humidity"] is not None else "no hum"
+        high_str  = f"high {agg['todayHighC']:.1f}°C" if agg["todayHighC"] is not None else "no high"
+        trend_str = f"trend {agg['tempTrendCPerMin']:+.3f}°C/min" if agg["tempTrendCPerMin"] is not None else "no trend"
+        print(f"[data_writer] json: {temp_str} {hum_str} {high_str} {trend_str}", flush=True)
+
 
 # ── Main loop ─────────────────────────────────────────────────────
 
@@ -299,6 +319,8 @@ def main():
     seed_today_high(con)
     state          = load_state()
     last_generated = 0.0
+    gen_count      = 0
+    print(f"[data_writer] started — offset={state['offset']} inode={state['inode']}", flush=True)
 
     while True:
         state = import_new_rows(con, state)
@@ -307,8 +329,9 @@ def main():
         now = time.time()
         if now - last_generated >= GENERATE_INTERVAL:
             try:
-                generate_current(con)
+                generate_current(con, verbose=(gen_count % 3 == 0))
                 last_generated = now
+                gen_count += 1
             except Exception as e:
                 print(f"[data_writer] generation failed: {e}", file=sys.stderr)
 
